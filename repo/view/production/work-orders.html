@@ -1,0 +1,126 @@
+{extend name="layout/base" /}
+{block name="content"}
+<div class="pp-card">
+    <div class="pp-card-header">Work Orders</div>
+    <div class="pp-card-body">
+        <table id="woTable" lay-filter="woTable"></table>
+    </div>
+</div>
+
+<!-- Operator completion form -->
+<div class="pp-card" id="woForm" style="display:none; margin-top:16px">
+    <div class="pp-card-header" id="woFormTitle">Complete Work Order</div>
+    <div class="pp-card-body">
+        <input type="hidden" id="woId">
+        <div class="layui-form-item">
+            <label class="layui-form-label">Quantity Completed</label>
+            <div class="layui-input-block"><input id="quantityCompleted" type="number" min="0" class="layui-input" value="0"></div>
+        </div>
+        <div class="layui-form-item">
+            <label class="layui-form-label">Quantity Rework</label>
+            <div class="layui-input-block"><input id="quantityRework" type="number" min="0" class="layui-input" value="0"></div>
+        </div>
+        <div class="layui-form-item">
+            <label class="layui-form-label">Downtime (min)</label>
+            <div class="layui-input-block"><input id="downtimeMinutes" type="number" min="0" class="layui-input" value="0"></div>
+        </div>
+        <div class="layui-form-item">
+            <label class="layui-form-label">Reason Code</label>
+            <div class="layui-input-block">
+                <select id="reasonCode" class="layui-input">
+                    <option value="">(none)</option>
+                    <option value="MATERIAL_DELAY">MATERIAL_DELAY</option>
+                    <option value="MACHINE_BREAKDOWN">MACHINE_BREAKDOWN</option>
+                    <option value="QUALITY_ISSUE">QUALITY_ISSUE</option>
+                    <option value="OPERATOR_ERROR">OPERATOR_ERROR</option>
+                    <option value="TOOL_WEAR">TOOL_WEAR</option>
+                    <option value="SETUP_TIME">SETUP_TIME</option>
+                    <option value="OTHER">OTHER</option>
+                </select>
+            </div>
+        </div>
+        <button class="layui-btn layui-btn-sm layui-btn-normal" id="completeBtn">Submit Completion</button>
+        <button class="layui-btn layui-btn-sm layui-btn-primary" id="cancelBtn">Cancel</button>
+    </div>
+</div>
+{/block}
+{block name="scripts"}
+<script>
+layui.use(['table','layer'], function(){
+    var table = layui.table;
+    var layer = layui.layer;
+    var $ = layui.$;
+
+    function reload(){ table.reload('woTable'); }
+
+    table.render({
+        elem: '#woTable',
+        url: '/api/production/work-orders',
+        method: 'get',
+        parseData: function(res){ return {code:0, count:res.data.total, data:res.data.list}; },
+        cols: [[
+            {field:'id', title:'ID', width:70},
+            {field:'product_id', title:'Product', width:100},
+            {field:'quantity_planned', title:'Planned', width:90},
+            {field:'quantity_completed', title:'Done', width:80},
+            {field:'quantity_rework', title:'Rework', width:80},
+            {field:'downtime_minutes', title:'Downtime', width:90},
+            {field:'reason_code', title:'Reason', width:140},
+            {field:'status', title:'Status', width:110, templet:function(d){ return PP.statusBadge(d.status); }},
+            {title:'Actions', minWidth:260, toolbar:'#woActions'}
+        ]],
+        page: true, limit: 20
+    });
+
+    window.PP_wo = {
+        start: function(id){
+            PP.put('/api/production/work-orders/' + id + '/start').then(function(res){
+                if (res.code === 200) { layer.msg('Started', {icon:1}); reload(); }
+                else layer.alert(res.message || 'Could not start', {icon:2});
+            });
+        },
+        openComplete: function(id){
+            $('#woId').val(id);
+            $('#quantityCompleted').val(0); $('#quantityRework').val(0);
+            $('#downtimeMinutes').val(0); $('#reasonCode').val('');
+            $('#woForm').show();
+        },
+        history: function(id){
+            PP.get('/api/production/work-orders/' + id + '/history').then(function(res){
+                layer.open({ title:'Work-Order #' + id + ' History', content: '<pre>' + JSON.stringify(res.data, null, 2) + '</pre>' });
+            });
+        }
+    };
+
+    $('#cancelBtn').on('click', function(){ $('#woForm').hide(); });
+
+    $('#completeBtn').on('click', function(){
+        var id = $('#woId').val();
+        var body = {
+            quantityCompleted: parseInt($('#quantityCompleted').val(), 10),
+            quantityRework: parseInt($('#quantityRework').val(), 10),
+            downtimeMinutes: parseInt($('#downtimeMinutes').val(), 10),
+            reasonCode: $('#reasonCode').val() || null,
+        };
+        PP.put('/api/production/work-orders/' + id + '/complete', body).then(function(res){
+            if (res.code === 200) {
+                layer.msg('Completed', {icon:1});
+                $('#woForm').hide();
+                reload();
+            } else {
+                layer.alert(res.message || 'Completion failed', {icon:2});
+            }
+        });
+    });
+});
+</script>
+<script type="text/html" id="woActions">
+    {{# if (d.status === 'PENDING') { }}
+    <button class="layui-btn layui-btn-xs" onclick="PP_wo.start({{d.id}})">Start</button>
+    {{# } }}
+    {{# if (d.status === 'IN_PROGRESS') { }}
+    <button class="layui-btn layui-btn-xs layui-btn-normal" onclick="PP_wo.openComplete({{d.id}})">Complete</button>
+    {{# } }}
+    <button class="layui-btn layui-btn-xs layui-btn-primary" onclick="PP_wo.history({{d.id}})">History</button>
+</script>
+{/block}

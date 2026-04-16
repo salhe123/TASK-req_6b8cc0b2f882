@@ -1,0 +1,127 @@
+{extend name="layout/base" /}
+{block name="content"}
+<div class="pp-card">
+    <div class="pp-card-header">
+        User Management
+        <button class="layui-btn layui-btn-sm layui-btn-normal" style="float:right" id="newUserBtn">
+            <i class="layui-icon layui-icon-addition"></i> New User
+        </button>
+    </div>
+    <div class="pp-card-body">
+        <table id="userTable" lay-filter="userTable"></table>
+    </div>
+</div>
+
+<div class="pp-card" id="userForm" style="display:none; margin-top:16px">
+    <div class="pp-card-header" id="userFormTitle">New User</div>
+    <div class="pp-card-body">
+        <input type="hidden" id="userId">
+        <div class="layui-form-item">
+            <label class="layui-form-label">Username</label>
+            <div class="layui-input-block"><input id="username" class="layui-input"></div>
+        </div>
+        <div class="layui-form-item" id="passwordRow">
+            <label class="layui-form-label">Password</label>
+            <div class="layui-input-block"><input id="password" class="layui-input" type="password" placeholder="min 10 chars, complex"></div>
+        </div>
+        <div class="layui-form-item">
+            <label class="layui-form-label">Role</label>
+            <div class="layui-input-block">
+                <select id="role" class="layui-input">
+                    <option value="PRODUCTION_PLANNER">PRODUCTION_PLANNER</option>
+                    <option value="OPERATOR">OPERATOR</option>
+                    <option value="SERVICE_COORDINATOR">SERVICE_COORDINATOR</option>
+                    <option value="PROVIDER">PROVIDER</option>
+                    <option value="REVIEWER">REVIEWER</option>
+                    <option value="REVIEW_MANAGER">REVIEW_MANAGER</option>
+                    <option value="PRODUCT_SPECIALIST">PRODUCT_SPECIALIST</option>
+                    <option value="CONTENT_MODERATOR">CONTENT_MODERATOR</option>
+                    <option value="FINANCE_CLERK">FINANCE_CLERK</option>
+                    <option value="SYSTEM_ADMIN">SYSTEM_ADMIN</option>
+                </select>
+            </div>
+        </div>
+        <div class="layui-form-item" id="statusRow" style="display:none">
+            <label class="layui-form-label">Status</label>
+            <div class="layui-input-block">
+                <select id="status" class="layui-input">
+                    <option value="ACTIVE">ACTIVE</option>
+                    <option value="LOCKED">LOCKED</option>
+                    <option value="INACTIVE">INACTIVE</option>
+                </select>
+            </div>
+        </div>
+        <button class="layui-btn layui-btn-sm layui-btn-normal" id="saveUser">Save</button>
+        <button class="layui-btn layui-btn-sm layui-btn-primary" id="cancelUser">Cancel</button>
+    </div>
+</div>
+{/block}
+{block name="scripts"}
+<script>
+layui.use(['table','layer'], function(){
+    var table = layui.table;
+    var layer = layui.layer;
+    var $ = layui.$;
+
+    table.render({
+        elem: '#userTable',
+        url: '/api/admin/users',
+        method: 'get',
+        parseData: function(res){ return {code:0, count:res.data.total, data:res.data.list}; },
+        cols: [[
+            {field:'id', title:'ID', width:70},
+            {field:'username', title:'Username', width:150},
+            {field:'role', title:'Role', width:180},
+            {field:'status', title:'Status', width:100, templet:function(d){ return PP.statusBadge(d.status); }},
+            {field:'last_login_at', title:'Last Login', width:180},
+            {title:'Actions', minWidth:220, toolbar:'#userActions'}
+        ]],
+        page: true, limit: 20
+    });
+
+    window.PP_user = {
+        edit: function(row){
+            $('#userFormTitle').text('Edit User #' + row.id);
+            $('#userId').val(row.id);
+            $('#username').val(row.username);
+            $('#role').val(row.role);
+            $('#status').val(row.status);
+            $('#statusRow').show();
+            $('#passwordRow').hide();
+            $('#userForm').show();
+        }
+    };
+
+    $('#newUserBtn').on('click', function(){
+        $('#userFormTitle').text('New User');
+        $('#userId').val(''); $('#username').val(''); $('#password').val('');
+        $('#statusRow').hide(); $('#passwordRow').show();
+        $('#userForm').show();
+    });
+    $('#cancelUser').on('click', function(){ $('#userForm').hide(); });
+    $('#saveUser').on('click', function(){
+        var id = $('#userId').val();
+        if (id) {
+            PP.put('/api/admin/users/' + id, {role: $('#role').val(), status: $('#status').val()}).then(function(res){
+                if (res.code === 200) { layer.msg('Saved', {icon:1}); $('#userForm').hide(); table.reload('userTable'); }
+                else layer.alert(res.message || 'Update failed', {icon:2});
+            });
+        } else {
+            PP.post('/api/admin/users', {
+                username: $('#username').val(),
+                password: $('#password').val(),
+                role: $('#role').val(),
+            }).then(function(res){
+                if (res.code === 201 || res.code === 200) { layer.msg('Created', {icon:1}); $('#userForm').hide(); table.reload('userTable'); }
+                else layer.alert(res.message || 'Create failed', {icon:2});
+            });
+        }
+    });
+});
+</script>
+<script type="text/html" id="userActions">
+    <button class="layui-btn layui-btn-xs" onclick="PP_user.edit({{JSON.stringify(d)}})">Edit</button>
+    {{# if(d.status==='ACTIVE'){ }}<button class="layui-btn layui-btn-xs layui-btn-danger" onclick="PP.put('/api/admin/users/{{d.id}}/lock').then(function(){location.reload()})">Lock</button>{{# } }}
+    {{# if(d.status==='LOCKED'){ }}<button class="layui-btn layui-btn-xs layui-btn-normal" onclick="PP.put('/api/admin/users/{{d.id}}/unlock').then(function(){location.reload()})">Unlock</button>{{# } }}
+</script>
+{/block}

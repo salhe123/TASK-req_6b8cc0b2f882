@@ -1,0 +1,139 @@
+{extend name="layout/base" /}
+{block name="content"}
+<div class="pp-card">
+    <div class="pp-card-header">
+        Product Catalog
+        <button class="layui-btn layui-btn-sm layui-btn-normal" style="float:right" id="newBtn">
+            <i class="layui-icon layui-icon-addition"></i> New Draft
+        </button>
+    </div>
+    <div class="pp-card-body">
+        <table id="productTable" lay-filter="productTable"></table>
+    </div>
+</div>
+
+<div class="pp-card" id="productForm" style="display:none; margin-top:16px">
+    <div class="pp-card-header" id="productFormTitle">New Product Draft</div>
+    <div class="pp-card-body">
+        <input type="hidden" id="productId">
+        <div class="layui-form-item">
+            <label class="layui-form-label">Name</label>
+            <div class="layui-input-block"><input id="name" class="layui-input"></div>
+        </div>
+        <div class="layui-form-item">
+            <label class="layui-form-label">Category</label>
+            <div class="layui-input-block">
+                <select id="category" class="layui-input">
+                    <option value="CPU">CPU</option>
+                    <option value="GPU">GPU</option>
+                    <option value="MOTHERBOARD">MOTHERBOARD</option>
+                </select>
+            </div>
+        </div>
+        <div class="layui-form-item">
+            <label class="layui-form-label">Vendor</label>
+            <div class="layui-input-block"><input id="vendorName" class="layui-input" placeholder="e.g. Intel, AMD"></div>
+        </div>
+        <div class="layui-form-item">
+            <label class="layui-form-label">Specs (JSON)</label>
+            <div class="layui-input-block">
+                <textarea id="specs" class="layui-input" style="min-height:100px">{"clockSpeed":"3.0 GHz","cores":8}</textarea>
+            </div>
+        </div>
+        <button class="layui-btn layui-btn-sm layui-btn-normal" id="saveBtn">Save Draft</button>
+        <button class="layui-btn layui-btn-sm layui-btn-warm" id="submitBtn" style="display:none">Submit to Moderation</button>
+        <button class="layui-btn layui-btn-sm layui-btn-primary" id="cancelBtn">Cancel</button>
+    </div>
+</div>
+{/block}
+{block name="scripts"}
+<script>
+layui.use(['table','layer'], function(){
+    var table = layui.table;
+    var layer = layui.layer;
+    var $ = layui.$;
+
+    table.render({
+        elem: '#productTable',
+        url: '/api/catalog/products',
+        method: 'get',
+        parseData: function(res){ return {code:0, count:res.data.total, data:res.data.list}; },
+        cols: [[
+            {field:'id', title:'ID', width:70},
+            {field:'name', title:'Name', minWidth:200},
+            {field:'category', title:'Category', width:120},
+            {field:'vendor_name', title:'Vendor', width:120, templet:function(d){ return d.vendor_name || (d.blind_masked ? '(masked)' : '—'); }},
+            {field:'completeness_score', title:'Completeness', width:110},
+            {field:'consistency_score', title:'Consistency', width:110},
+            {field:'status', title:'Status', width:110, templet:function(d){ return PP.statusBadge(d.status); }},
+            {title:'Actions', minWidth:220, toolbar:'#productActions'}
+        ]],
+        page: true, limit: 20
+    });
+
+    window.PP_catalog = {
+        edit: function(row){
+            $('#productFormTitle').text('Edit Product #' + row.id);
+            $('#productId').val(row.id);
+            $('#name').val(row.name);
+            $('#category').val(row.category);
+            $('#vendorName').val(row.vendor_name || '');
+            $('#specs').val(JSON.stringify(row.specs || {}, null, 2));
+            $('#submitBtn').show();
+            $('#productForm').show();
+        },
+        submit: function(id){
+            PP.post('/api/catalog/products/' + id + '/submit').then(function(res){
+                if (res.code === 200) {
+                    layer.msg('Submitted; completeness=' + res.data.completenessScore, {icon:1});
+                    table.reload('productTable');
+                } else {
+                    layer.alert(res.message || 'Submit failed', {icon:2});
+                }
+            });
+        }
+    };
+
+    $('#newBtn').on('click', function(){
+        $('#productFormTitle').text('New Product Draft');
+        $('#productId').val('');
+        $('#name').val(''); $('#vendorName').val(''); $('#specs').val('{\n  "clockSpeed": "3.0 GHz",\n  "cores": 8\n}');
+        $('#submitBtn').hide();
+        $('#productForm').show();
+    });
+    $('#cancelBtn').on('click', function(){ $('#productForm').hide(); });
+
+    $('#saveBtn').on('click', function(){
+        var specs; try { specs = JSON.parse($('#specs').val()); } catch (e) { layer.alert('Specs must be valid JSON'); return; }
+        var body = {
+            name: $('#name').val(),
+            category: $('#category').val(),
+            vendorName: $('#vendorName').val(),
+            specs: specs,
+        };
+        var id = $('#productId').val();
+        var req = id ? PP.put('/api/catalog/products/' + id, body) : PP.post('/api/catalog/products', body);
+        req.then(function(res){
+            if (res.code === 201 || res.code === 200) {
+                layer.msg('Saved', {icon:1});
+                $('#productForm').hide();
+                table.reload('productTable');
+            } else {
+                layer.alert(res.message || 'Save failed', {icon:2});
+            }
+        });
+    });
+
+    $('#submitBtn').on('click', function(){
+        var id = $('#productId').val();
+        if (id) PP_catalog.submit(id);
+    });
+});
+</script>
+<script type="text/html" id="productActions">
+    {{# if (d.status === 'DRAFT') { }}
+    <button class="layui-btn layui-btn-xs" onclick="PP_catalog.edit({{JSON.stringify(d)}})">Edit</button>
+    <button class="layui-btn layui-btn-xs layui-btn-warm" onclick="PP_catalog.submit({{d.id}})">Submit</button>
+    {{# } }}
+</script>
+{/block}

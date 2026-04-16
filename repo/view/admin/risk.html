@@ -1,0 +1,51 @@
+{extend name="layout/base" /}
+{block name="content"}
+<div class="pp-card">
+    <div class="pp-card-header">Open Anomaly Flags</div>
+    <div class="pp-card-body" id="flagsList"></div>
+</div>
+<div class="pp-card" style="margin-top:20px">
+    <div class="pp-card-header">Risk Scores</div>
+    <div class="pp-card-body">
+        <table id="scoreTable" lay-filter="scoreTable"></table>
+    </div>
+</div>
+{/block}
+{block name="scripts"}
+<script>
+layui.use(['table','layer'], function(){
+    var $ = layui.$, layer = layui.layer;
+    // Flags
+    $.get('/api/admin/risk/flags', function(res){
+        if(res.code===200){
+            var html = '';
+            if(!res.data.length) html = '<p>No open flags.</p>';
+            res.data.forEach(function(f){
+                html += '<div class="pp-card" style="padding:12px;margin-bottom:8px">';
+                html += PP.statusBadge(f.flag_type) + ' User #'+f.user_id;
+                html += ' <small style="color:#999">'+f.created_at+'</small>';
+                html += '<button class="layui-btn layui-btn-xs layui-btn-normal" style="float:right" onclick="PP.put(\'/api/admin/risk/flags/'+f.id+'/clear\').then(function(){location.reload()})">Clear</button>';
+                html += '</div>';
+            });
+            $('#flagsList').html(html);
+        }
+    });
+    // Scores
+    layui.table.render({
+        elem: '#scoreTable',
+        url: '/api/admin/risk/scores',
+        method: 'get',
+        parseData: function(res){ return {code:0, count:res.data.length, data:res.data}; },
+        cols: [[
+            {field:'user_id', title:'User', width:80},
+            {field:'score', title:'Score', width:80},
+            {field:'success_rate', title:'Success Rate', width:120},
+            {field:'dispute_rate', title:'Dispute Rate', width:120},
+            {field:'cancellation_rate', title:'Cancel Rate', width:120},
+            {field:'calculated_at', title:'Calculated', width:180}
+        ]],
+        page: false
+    });
+});
+</script>
+{/block}

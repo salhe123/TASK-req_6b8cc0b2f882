@@ -1,0 +1,63 @@
+{extend name="layout/base" /}
+{block name="content"}
+<div class="pp-card">
+    <div class="pp-card-header">Weekly Settlements</div>
+    <div class="pp-card-body">
+        <div style="margin-bottom:15px">
+            <input type="text" id="weekEnding" placeholder="Week ending (MM/DD/YYYY)" class="layui-input" style="width:220px;display:inline-block">
+            <input type="number" id="feePercent" placeholder="Platform fee %" value="8" class="layui-input" style="width:140px;display:inline-block">
+            <button class="layui-btn layui-btn-sm layui-btn-normal" id="createBtn">Create Settlement</button>
+        </div>
+        <table id="settlementTable" lay-filter="settlementTable"></table>
+    </div>
+</div>
+{/block}
+{block name="scripts"}
+<script>
+layui.use(['table','layer'], function(){
+    var table = layui.table;
+    var layer = layui.layer;
+    table.render({
+        elem: '#settlementTable',
+        url: '/api/finance/settlements',
+        method: 'get',
+        parseData: function(res){ return {code:0, count:res.data.total, data:res.data.list}; },
+        cols: [[
+            {field:'id', title:'ID', width:70},
+            {field:'week_ending', title:'Week Ending', width:120},
+            {field:'total_settled', title:'Total', width:120},
+            {field:'platform_fee', title:'Fee', width:100},
+            {field:'provider_payouts', title:'Payouts', width:120},
+            {field:'transaction_count', title:'Txns', width:80},
+            {field:'status', title:'Status', width:110, templet:function(d){ return PP.statusBadge(d.status); }},
+            {title:'Report', width:100, templet:function(d){
+                return '<button class="layui-btn layui-btn-xs" onclick="PP_settle.report('+d.id+')">Report</button>';
+            }}
+        ]],
+        page: true, limit: 20
+    });
+
+    window.PP_settle = {
+        report: function(id){
+            PP.get('/api/finance/settlements/'+id+'/report').then(function(res){
+                layer.open({ title: 'Settlement Report #'+id, content: '<pre>'+JSON.stringify(res.data, null, 2)+'</pre>' });
+            });
+        }
+    };
+
+    document.getElementById('createBtn').addEventListener('click', function(){
+        var wk = document.getElementById('weekEnding').value.trim();
+        var fee = parseFloat(document.getElementById('feePercent').value);
+        if (!wk) { layer.msg('Week ending required', {icon:2}); return; }
+        PP.post('/api/finance/settlements', { weekEnding: wk, platformFeePercent: fee }).then(function(res){
+            if (res.code === 201 || res.code === 200) {
+                layer.msg('Settlement created', {icon:1});
+                table.reload('settlementTable');
+            } else {
+                layer.alert(res.message || 'Creation failed', {icon:2});
+            }
+        });
+    });
+});
+</script>
+{/block}

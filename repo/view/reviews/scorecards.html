@@ -1,0 +1,106 @@
+{extend name="layout/base" /}
+{block name="content"}
+<div class="pp-card">
+    <div class="pp-card-header">
+        Scorecards
+        <button class="layui-btn layui-btn-sm layui-btn-normal" style="float:right" id="newBtn">
+            <i class="layui-icon layui-icon-addition"></i> New Scorecard
+        </button>
+    </div>
+    <div class="pp-card-body">
+        <table id="scorecardsTable" lay-filter="scorecardsTable"></table>
+    </div>
+</div>
+
+<div class="pp-card" id="scForm" style="display:none; margin-top:16px">
+    <div class="pp-card-header">New Scorecard (3–7 dimensions, weights must total 100)</div>
+    <div class="pp-card-body">
+        <div class="layui-form-item">
+            <label class="layui-form-label">Name</label>
+            <div class="layui-input-block"><input id="scName" class="layui-input" placeholder="e.g. Hardware Review v2"></div>
+        </div>
+        <div id="dimList"></div>
+        <button class="layui-btn layui-btn-sm" id="addDim">+ Add dimension</button>
+        <div style="margin-top:12px">
+            <button class="layui-btn layui-btn-sm layui-btn-normal" id="saveSc">Save</button>
+            <button class="layui-btn layui-btn-sm layui-btn-primary" id="cancelSc">Cancel</button>
+        </div>
+    </div>
+</div>
+{/block}
+{block name="scripts"}
+<script>
+layui.use(['table','layer'], function(){
+    var table = layui.table;
+    var layer = layui.layer;
+    var $ = layui.$;
+
+    table.render({
+        elem: '#scorecardsTable',
+        url: '/api/reviews/scorecards',
+        method: 'get',
+        parseData: function(res){ return {code:0, count:(res.data||[]).length, data:res.data}; },
+        cols: [[
+            {field:'id', title:'ID', width:70},
+            {field:'name', title:'Name', minWidth:200},
+            {field:'status', title:'Status', width:120},
+            {field:'created_at', title:'Created', width:180},
+            {title:'Dimensions', minWidth:260, templet: function(d){
+                return (d.dimensions || []).map(function(x){ return x.name + ' (' + x.weight + ')'; }).join(', ');
+            }}
+        ]],
+        page: false
+    });
+
+    function renderDims(){
+        var rows = document.querySelectorAll('.pp-dim-row');
+        var html = '';
+        for (var i = 0; i < 3; i++) {
+            html += dimRow(i);
+        }
+        if (document.querySelectorAll('.pp-dim-row').length === 0) {
+            document.getElementById('dimList').innerHTML = html;
+        }
+    }
+    function dimRow(i){
+        return '<div class="pp-dim-row" style="margin:6px 0">' +
+               '<input class="layui-input dim-name" placeholder="Dimension #' + (i+1) + ' name" style="width:240px;display:inline-block">' +
+               '<input class="layui-input dim-weight" type="number" min="1" max="100" placeholder="weight" style="width:120px;display:inline-block;margin-left:8px">' +
+               '</div>';
+    }
+
+    $('#newBtn').on('click', function(){
+        $('#scName').val('');
+        document.getElementById('dimList').innerHTML = '';
+        renderDims();
+        $('#scForm').show();
+    });
+    $('#cancelSc').on('click', function(){ $('#scForm').hide(); });
+    $('#addDim').on('click', function(){
+        var i = document.querySelectorAll('.pp-dim-row').length;
+        if (i >= 7) { layer.msg('Maximum 7 dimensions', {icon:0}); return; }
+        document.getElementById('dimList').insertAdjacentHTML('beforeend', dimRow(i));
+    });
+    $('#saveSc').on('click', function(){
+        var dims = [];
+        document.querySelectorAll('.pp-dim-row').forEach(function(row){
+            var n = row.querySelector('.dim-name').value.trim();
+            var w = parseInt(row.querySelector('.dim-weight').value, 10);
+            if (n && w > 0) dims.push({name: n, weight: w});
+        });
+        var total = dims.reduce(function(a, d){ return a + d.weight; }, 0);
+        if (dims.length < 3 || dims.length > 7) { layer.alert('3–7 dimensions required'); return; }
+        if (total !== 100) { layer.alert('Dimension weights must sum to 100, got ' + total); return; }
+        PP.post('/api/reviews/scorecards', {name: $('#scName').val(), dimensions: dims}).then(function(res){
+            if (res.code === 201 || res.code === 200) {
+                layer.msg('Saved', {icon:1});
+                $('#scForm').hide();
+                table.reload('scorecardsTable');
+            } else {
+                layer.alert(res.message || 'Save failed', {icon:2});
+            }
+        });
+    });
+});
+</script>
+{/block}

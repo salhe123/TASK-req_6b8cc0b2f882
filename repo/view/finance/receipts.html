@@ -1,0 +1,113 @@
+{extend name="layout/base" /}
+{block name="content"}
+<div class="pp-card">
+    <div class="pp-card-header">Receipts</div>
+    <div class="pp-card-body">
+        <table id="receiptsTable" lay-filter="receiptsTable"></table>
+    </div>
+</div>
+
+<div class="pp-card" id="bindPanel" style="display:none; margin-top:16px">
+    <div class="pp-card-header" id="bindTitle">Bind Receipt to Appointment</div>
+    <div class="pp-card-body">
+        <input type="hidden" id="bindReceiptId">
+        <div class="layui-form-item">
+            <label class="layui-form-label">Appointment ID</label>
+            <div class="layui-input-block"><input id="bindAppointmentId" type="number" min="1" class="layui-input"></div>
+        </div>
+        <button class="layui-btn layui-btn-sm layui-btn-normal" id="doBind">Bind</button>
+        <button class="layui-btn layui-btn-sm layui-btn-primary" id="cancelBind">Cancel</button>
+    </div>
+</div>
+
+<div class="pp-card" id="callbackPanel" style="margin-top:16px">
+    <div class="pp-card-header">Bank Callback (test)</div>
+    <div class="pp-card-body">
+        <div class="layui-form-item">
+            <label class="layui-form-label">Receipt Number</label>
+            <div class="layui-input-block"><input id="cbNumber" class="layui-input" placeholder="RCP-YYYYMMDD-000000"></div>
+        </div>
+        <div class="layui-form-item">
+            <label class="layui-form-label">Amount</label>
+            <div class="layui-input-block"><input id="cbAmount" type="number" step="0.01" class="layui-input"></div>
+        </div>
+        <div class="layui-form-item">
+            <label class="layui-form-label">Signature (hex)</label>
+            <div class="layui-input-block"><input id="cbSig" class="layui-input"></div>
+        </div>
+        <div class="layui-form-item">
+            <label class="layui-form-label">Issued At</label>
+            <div class="layui-input-block"><input id="cbIssuedAt" class="layui-input" placeholder="YYYY-MM-DD HH:MM:SS"></div>
+        </div>
+        <button class="layui-btn layui-btn-sm" id="postCallback">Send Callback</button>
+    </div>
+</div>
+{/block}
+{block name="scripts"}
+<script>
+layui.use(['table','layer'], function(){
+    var table = layui.table;
+    var layer = layui.layer;
+    var $ = layui.$;
+
+    table.render({
+        elem: '#receiptsTable',
+        url: '/api/finance/receipts',
+        method: 'get',
+        parseData: function(res){ return {code:0, count:res.data.total, data:res.data.list}; },
+        cols: [[
+            {field:'id', title:'ID', width:70},
+            {field:'receipt_number', title:'Receipt #', width:220},
+            {field:'amount', title:'Amount', width:120},
+            {field:'appointment_id', title:'Appointment', width:110, templet:function(d){ return d.appointment_id || '—'; }},
+            {field:'issued_at', title:'Issued', width:180},
+            {title:'Actions', minWidth:260, toolbar:'#receiptActions'}
+        ]],
+        page: true, limit: 20
+    });
+
+    window.PP_rcpt = {
+        verify: function(id){
+            PP.get('/api/finance/receipts/' + id + '/verify').then(function(r){
+                layer.msg(r.data && r.data.signatureValid ? 'Signature valid' : 'Signature INVALID',
+                    {icon: r.data && r.data.signatureValid ? 1 : 2});
+            });
+        },
+        openBind: function(id){
+            $('#bindReceiptId').val(id);
+            $('#bindAppointmentId').val('');
+            $('#bindTitle').text('Bind Receipt #' + id + ' to Appointment');
+            $('#bindPanel').show();
+        }
+    };
+
+    $('#cancelBind').on('click', function(){ $('#bindPanel').hide(); });
+    $('#doBind').on('click', function(){
+        var id = $('#bindReceiptId').val();
+        var ap = parseInt($('#bindAppointmentId').val(), 10);
+        if (!ap) { layer.alert('Appointment id required'); return; }
+        PP.put('/api/finance/receipts/' + id + '/bind', {appointmentId: ap}).then(function(res){
+            if (res.code === 200) { layer.msg('Bound', {icon:1}); $('#bindPanel').hide(); table.reload('receiptsTable'); }
+            else layer.alert(res.message || 'Bind failed', {icon:2});
+        });
+    });
+
+    $('#postCallback').on('click', function(){
+        var body = {
+            receiptNumber: $('#cbNumber').val().trim(),
+            amount: parseFloat($('#cbAmount').val()),
+            signature: $('#cbSig').val().trim(),
+            issuedAt: $('#cbIssuedAt').val().trim(),
+        };
+        PP.post('/api/finance/receipts/callback', body).then(function(res){
+            if (res.code === 200) { layer.msg('Callback verified', {icon:1}); }
+            else layer.alert(res.message || 'Callback rejected', {icon:2});
+        });
+    });
+});
+</script>
+<script type="text/html" id="receiptActions">
+    <button class="layui-btn layui-btn-xs" onclick="PP_rcpt.verify({{d.id}})">Verify</button>
+    <button class="layui-btn layui-btn-xs layui-btn-normal" onclick="PP_rcpt.openBind({{d.id}})">Bind</button>
+</script>
+{/block}

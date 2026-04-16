@@ -1,0 +1,11 @@
+.git
+.gitignore
+.idea
+.vscode
+node_modules
+runtime/**
+storage/uploads/**
+mysql_data
+.phpunit.result.cache
+*.log
+.DS_Store

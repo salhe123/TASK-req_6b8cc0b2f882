@@ -1,0 +1,30 @@
+{extend name="layout/base" /}
+{block name="content"}
+<div class="pp-card">
+    <div class="pp-card-header">Capacity Loading</div>
+    <div class="pp-card-body" id="capacityGrid"></div>
+</div>
+{/block}
+{block name="scripts"}
+<script>
+layui.use(['layer'], function(){
+    var $ = layui.$;
+    $.get('/api/production/capacity', function(res){
+        if(res.code===200){
+            var html = '<div class="pp-stats-grid">';
+            res.data.forEach(function(wc){
+                var cls = wc.warning ? 'color:#FF5722;font-weight:bold' : 'color:#16b777';
+                html += '<div class="pp-stat-card">';
+                html += '<div class="pp-stat-value" style="'+cls+'">' + wc.loadPercent + '%</div>';
+                html += '<div class="pp-stat-label">' + (wc.workCenterName||'WC #'+wc.workCenterId) + '</div>';
+                html += '<div style="font-size:12px;color:#999">' + wc.plannedHours + ' / ' + wc.capacityHours + ' hrs</div>';
+                if(wc.warning) html += '<div style="color:#FF5722;font-size:12px;margin-top:5px">WARNING: Over 90%</div>';
+                html += '</div>';
+            });
+            html += '</div>';
+            $('#capacityGrid').html(html);
+        }
+    });
+});
+</script>
+{/block}

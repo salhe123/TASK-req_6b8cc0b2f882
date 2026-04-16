@@ -1,0 +1,91 @@
+{extend name="layout/base" /}
+{block name="content"}
+<div class="pp-card">
+    <div class="pp-card-header">
+        Appointments
+        <button class="layui-btn layui-btn-sm layui-btn-normal" style="float:right" onclick="location.href='/appointments/create'">
+            <i class="layui-icon layui-icon-addition"></i> New Appointment
+        </button>
+    </div>
+    <div class="pp-card-body">
+        <div class="layui-form" style="margin-bottom:15px">
+            <div class="layui-inline">
+                <select id="statusFilter" lay-filter="statusFilter">
+                    <option value="">All Status</option>
+                    <option value="PENDING">Pending</option>
+                    <option value="CONFIRMED">Confirmed</option>
+                    <option value="IN_PROGRESS">In Progress</option>
+                    <option value="COMPLETED">Completed</option>
+                    <option value="EXPIRED">Expired</option>
+                    <option value="CANCELLED">Cancelled</option>
+                </select>
+            </div>
+            <button class="layui-btn layui-btn-sm" id="searchBtn">Search</button>
+        </div>
+        <table id="appointmentTable" lay-filter="appointmentTable"></table>
+    </div>
+</div>
+{/block}
+{block name="scripts"}
+<script>
+layui.use(['table','form','layer'], function(){
+    var table = layui.table;
+    var layer = layui.layer;
+    table.render({
+        elem: '#appointmentTable',
+        url: '/api/appointments',
+        method: 'get',
+        parseData: function(res){ return {code:0, count:res.data.total, data:res.data.list}; },
+        cols: [[
+            {field:'id', title:'ID', width:70},
+            {field:'customer_id', title:'Customer', width:100},
+            {field:'provider_id', title:'Provider', width:100},
+            {field:'date_time', title:'Date/Time', width:180},
+            {field:'location_hint', title:'Location', minWidth:150},
+            {field:'status', title:'Status', width:120, templet:function(d){ return PP.statusBadge(d.status); }},
+            {title:'Actions', minWidth:260, toolbar:'#apptActions'}
+        ]],
+        page: true, limit: 20
+    });
+    layui.$('#searchBtn').on('click', function(){
+        var status = layui.$('#statusFilter').val();
+        table.reload('appointmentTable', {where:{status:status}, page:{curr:1}});
+    });
+    // Action handlers
+    window.PP_appt = {
+        confirm: function(id){
+            PP.put('/api/appointments/'+id+'/confirm').then(function(res){
+                layer.msg(res.message || 'Confirmed', {icon:1});
+                table.reload('appointmentTable');
+            });
+        },
+        cancel: function(id){
+            var reason = prompt('Cancellation reason?');
+            if (reason === null) return;
+            PP.put('/api/appointments/'+id+'/cancel', {reason: reason}).then(function(){
+                layer.msg('Cancelled', {icon:1});
+                table.reload('appointmentTable');
+            });
+        },
+        reschedule: function(id){
+            var dt = prompt('New date/time (MM/DD/YYYY hh:mm AM/PM):');
+            if (!dt) return;
+            var reason = prompt('Reason (required for short-notice admin override):') || null;
+            PP.put('/api/appointments/'+id+'/reschedule', {newDateTime: dt, reason: reason}).then(function(){
+                layer.msg('Rescheduled', {icon:1});
+                table.reload('appointmentTable');
+            });
+        }
+    };
+});
+</script>
+<script type="text/html" id="apptActions">
+    {{# if (d.status === 'PENDING') { }}
+    <button class="layui-btn layui-btn-xs layui-btn-normal" onclick="PP_appt.confirm({{d.id}})">Confirm</button>
+    {{# } }}
+    {{# if (d.status === 'PENDING' || d.status === 'CONFIRMED') { }}
+    <button class="layui-btn layui-btn-xs" onclick="PP_appt.reschedule({{d.id}})">Reschedule</button>
+    <button class="layui-btn layui-btn-xs layui-btn-danger" onclick="PP_appt.cancel({{d.id}})">Cancel</button>
+    {{# } }}
+</script>
+{/block}

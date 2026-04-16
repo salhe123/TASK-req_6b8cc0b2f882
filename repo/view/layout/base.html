@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{$title|default='Precision Portal'}</title>
+    <link rel="stylesheet" href="/static/layui/css/layui.css">
+    <link rel="stylesheet" href="/static/css/app.css">
+</head>
+<body>
+<div class="pp-layout">
+    <!-- Sidebar Navigation -->
+    <div class="pp-sidebar">
+        <div class="pp-sidebar-header">
+            <h2>Precision Portal</h2>
+            {if condition="session('user')"}
+            <span class="pp-role-badge">{$Think.session.user.role|default='Guest'}</span>
+            {/if}
+        </div>
+
+        <nav class="pp-sidebar-nav">
+            <!-- Common: All authenticated users -->
+            {if condition="session('user')"}
+            <div class="pp-nav-group">
+                <div class="pp-nav-title">Main</div>
+                <a href="/dashboard"><i class="layui-icon layui-icon-home"></i> Dashboard</a>
+            </div>
+            {/if}
+
+            <!-- SERVICE_COORDINATOR -->
+            {if condition="session('user.role') == 'SERVICE_COORDINATOR' || session('user.role') == 'SYSTEM_ADMIN'"}
+            <div class="pp-nav-group">
+                <div class="pp-nav-title">Appointments</div>
+                <a href="/appointments"><i class="layui-icon layui-icon-date"></i> All Appointments</a>
+                <a href="/appointments/create"><i class="layui-icon layui-icon-addition"></i> New Appointment</a>
+            </div>
+            {/if}
+
+            <!-- PROVIDER -->
+            {if condition="session('user.role') == 'PROVIDER' || session('user.role') == 'SYSTEM_ADMIN'"}
+            <div class="pp-nav-group">
+                <div class="pp-nav-title">Provider</div>
+                <a href="/provider/queue"><i class="layui-icon layui-icon-list"></i> My Queue</a>
+            </div>
+            {/if}
+
+            <!-- PRODUCTION_PLANNER / OPERATOR -->
+            {if condition="session('user.role') == 'PRODUCTION_PLANNER' || session('user.role') == 'OPERATOR' || session('user.role') == 'SYSTEM_ADMIN'"}
+            <div class="pp-nav-group">
+                <div class="pp-nav-title">Production</div>
+                {if condition="session('user.role') == 'PRODUCTION_PLANNER' || session('user.role') == 'SYSTEM_ADMIN'"}
+                <a href="/production/mps"><i class="layui-icon layui-icon-template-1"></i> MPS Schedule</a>
+                {/if}
+                <a href="/production/work-orders"><i class="layui-icon layui-icon-form"></i> Work Orders</a>
+                {if condition="session('user.role') == 'PRODUCTION_PLANNER' || session('user.role') == 'SYSTEM_ADMIN'"}
+                <a href="/production/capacity"><i class="layui-icon layui-icon-chart"></i> Capacity</a>
+                {/if}
+            </div>
+            {/if}
+
+            <!-- PRODUCT_SPECIALIST (drafting) + CONTENT_MODERATOR (approval) -->
+            {if condition="session('user.role') == 'PRODUCT_SPECIALIST' || session('user.role') == 'CONTENT_MODERATOR' || session('user.role') == 'SYSTEM_ADMIN'"}
+            <div class="pp-nav-group">
+                <div class="pp-nav-title">Catalog</div>
+                <a href="/catalog/products"><i class="layui-icon layui-icon-app"></i> Products</a>
+                {if condition="session('user.role') == 'CONTENT_MODERATOR' || session('user.role') == 'SYSTEM_ADMIN'"}
+                <a href="/moderation"><i class="layui-icon layui-icon-flag-1"></i> Moderation Queue</a>
+                {/if}
+            </div>
+            {/if}
+
+            <!-- REVIEWER / REVIEW_MANAGER -->
+            {if condition="session('user.role') == 'REVIEWER' || session('user.role') == 'REVIEW_MANAGER' || session('user.role') == 'SYSTEM_ADMIN'"}
+            <div class="pp-nav-group">
+                <div class="pp-nav-title">Reviews</div>
+                <a href="/reviews/assignments"><i class="layui-icon layui-icon-read"></i> My Reviews</a>
+                <a href="/reviews/scorecards"><i class="layui-icon layui-icon-slider"></i> Scorecards</a>
+            </div>
+            {/if}
+
+            <!-- FINANCE_CLERK -->
+            {if condition="session('user.role') == 'FINANCE_CLERK' || session('user.role') == 'SYSTEM_ADMIN'"}
+            <div class="pp-nav-group">
+                <div class="pp-nav-title">Finance</div>
+                <a href="/finance/payments"><i class="layui-icon layui-icon-dollar"></i> Payments</a>
+                <a href="/finance/receipts"><i class="layui-icon layui-icon-note"></i> Receipts</a>
+                <a href="/finance/reconciliation"><i class="layui-icon layui-icon-transfer"></i> Reconciliation</a>
+                <a href="/finance/settlements"><i class="layui-icon layui-icon-chart-screen"></i> Settlements</a>
+            </div>
+            {/if}
+
+            <!-- SYSTEM_ADMIN -->
+            {if condition="session('user.role') == 'SYSTEM_ADMIN'"}
+            <div class="pp-nav-group">
+                <div class="pp-nav-title">Administration</div>
+                <a href="/admin/users"><i class="layui-icon layui-icon-user"></i> Users</a>
+                <a href="/admin/risk"><i class="layui-icon layui-icon-vercode"></i> Risk & Credit</a>
+                <a href="/admin/audit"><i class="layui-icon layui-icon-log"></i> Audit Logs</a>
+            </div>
+            {/if}
+        </nav>
+
+        <div class="pp-sidebar-footer">
+            {if condition="session('user')"}
+            <a href="javascript:;" onclick="PP.post('/api/auth/logout').then(function(){window.location.href='/login'})">
+                <i class="layui-icon layui-icon-logout"></i> Logout
+            </a>
+            {/if}
+        </div>
+    </div>
+
+    <!-- Main Content Area -->
+    <div class="pp-main">
+        <div class="pp-header">
+            <div class="pp-breadcrumb">{$breadcrumb|default='Dashboard'}</div>
+            <div class="pp-user-info">
+                {if condition="session('user')"}
+                <i class="layui-icon layui-icon-username"></i>
+                {$Think.session.user.username|default=''}
+                {/if}
+            </div>
+        </div>
+
+        <div class="pp-content">
+            {block name="content"}{/block}
+        </div>
+    </div>
+</div>
+
+<script src="/static/layui/layui.js"></script>
+<script src="/static/js/app.js"></script>
+{block name="scripts"}{/block}
+</body>
+</html>

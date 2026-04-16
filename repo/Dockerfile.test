@@ -1,0 +1,43 @@
+FROM php:8.1-cli
+
+# Install system dependencies + MySQL server
+ENV DEBIAN_FRONTEND=noninteractive
+RUN apt-get update && apt-get install -y \
+    libzip-dev libpng-dev libjpeg-dev unzip curl wget \
+    default-mysql-server default-mysql-client \
+    && docker-php-ext-configure gd --with-jpeg \
+    && docker-php-ext-install pdo_mysql zip gd bcmath \
+    && pecl install pcov && docker-php-ext-enable pcov \
+    && apt-get clean && rm -rf /var/lib/apt/lists/*
+
+# Install Composer
+COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
+
+WORKDIR /app
+
+# Offline-first dependency strategy:
+#   1. If the build context already ships `vendor/` (preferred for air-gapped
+#      environments), we use it as-is and never call Composer.
+#   2. Otherwise, if `composer.lock` is present, we run `composer install`
+#      which is deterministic and can be served by an internal Composer mirror.
+#   3. As a last resort (no lockfile, no vendor/) we fall back to
+#      `composer install --no-lock` which requires the public registry.
+COPY . .
+RUN if [ -f vendor/autoload.php ]; then \
+        echo "Using committed vendor/ — no network fetch"; \
+    elif [ -f composer.lock ]; then \
+        composer install --optimize-autoloader --no-interaction --prefer-dist; \
+    else \
+        echo "WARN: neither vendor/ nor composer.lock present — this path requires network" && \
+        composer install --optimize-autoloader --no-interaction --no-scripts; \
+    fi
+
+# Create required directories
+RUN mkdir -p runtime storage/uploads/photos storage/uploads/documents storage/uploads/csv \
+    && chmod -R 777 runtime/ storage/
+
+# Copy the test entrypoint
+COPY docker/run_tests_entry.sh /run_tests_entry.sh
+RUN chmod +x /run_tests_entry.sh
+
+CMD ["/run_tests_entry.sh"]

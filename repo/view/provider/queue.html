@@ -1,0 +1,87 @@
+{extend name="layout/base" /}
+{block name="content"}
+<div class="pp-card">
+    <div class="pp-card-header">My Queue - Today's Appointments</div>
+    <div class="pp-card-body">
+        <table id="queueTable" lay-filter="queueTable"></table>
+    </div>
+</div>
+
+<!-- Hidden multipart upload form, filled in per-row by uploadEvidence() -->
+<form id="evidenceForm" enctype="multipart/form-data" style="display:none">
+    <input type="file" id="evidenceFile" name="file" accept="image/jpeg,image/png,image/gif,application/pdf">
+</form>
+{/block}
+{block name="scripts"}
+<script>
+layui.use(['table','layer'], function(){
+    var table = layui.table;
+    var layer = layui.layer;
+
+    window.PP_provider = {
+        checkIn: function(id){
+            PP.put('/api/appointments/'+id+'/check-in').then(function(){
+                layer.msg('Checked in', {icon:1});
+                table.reload('queueTable');
+            });
+        },
+        checkOut: function(id){
+            PP.put('/api/appointments/'+id+'/check-out').then(function(res){
+                if (res.code === 409) {
+                    layer.msg('Upload completion evidence first', {icon:5});
+                } else {
+                    layer.msg('Checked out', {icon:1});
+                    table.reload('queueTable');
+                }
+            }).catch(function(xhr){
+                var msg = 'Check-out failed';
+                try { var b = JSON.parse(xhr.responseText); msg = b.message || msg; } catch(e){}
+                layer.msg(msg, {icon:2});
+            });
+        },
+        uploadEvidence: function(id){
+            var input = document.getElementById('evidenceFile');
+            input.onchange = function(){
+                var f = input.files[0];
+                if (!f) return;
+                var fd = new FormData();
+                fd.append('file', f);
+                fetch('/api/appointments/'+id+'/attachments', {
+                    method: 'POST', credentials: 'same-origin', body: fd,
+                }).then(function(r){ return r.json(); }).then(function(res){
+                    if (res.code === 201 || res.code === 200) {
+                        layer.msg('Evidence uploaded', {icon:1});
+                        table.reload('queueTable');
+                    } else {
+                        layer.msg(res.message || 'Upload failed', {icon:2});
+                    }
+                });
+            };
+            input.click();
+        }
+    };
+
+    table.render({
+        elem: '#queueTable',
+        url: '/api/provider/queue',
+        method: 'get',
+        parseData: function(res){ return {code:0, count:res.data.count, data:res.data.appointments}; },
+        cols: [[
+            {field:'id', title:'ID', width:70},
+            {field:'date_time', title:'Time', width:180},
+            {field:'location_hint', title:'Location', minWidth:200},
+            {field:'status', title:'Status', width:120, templet:function(d){ return PP.statusBadge(d.status); }},
+            {title:'Actions', width:320, toolbar:'#queueActions'}
+        ]],
+        page: false
+    });
+});
+</script>
+<script type="text/html" id="queueActions">
+    {{# if(d.status==='CONFIRMED'){ }}<button class="layui-btn layui-btn-xs" onclick="PP_provider.checkIn({{d.id}})">Check In</button>{{# } }}
+    {{# if(d.status==='IN_PROGRESS'){ }}
+        <button class="layui-btn layui-btn-xs layui-btn-warm" onclick="PP_provider.uploadEvidence({{d.id}})">Upload Evidence</button>
+        <button class="layui-btn layui-btn-xs layui-btn-normal" onclick="PP_provider.checkOut({{d.id}})">Check Out</button>
+    {{# } }}
+</script>
+{/block}

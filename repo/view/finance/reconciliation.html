@@ -1,0 +1,45 @@
+{extend name="layout/base" /}
+{block name="content"}
+<div class="pp-card">
+    <div class="pp-card-header">Reconciliation</div>
+    <div class="pp-card-body">
+        <div class="layui-form" style="margin-bottom:15px">
+            <div class="layui-inline"><input id="dateFrom" class="layui-input" placeholder="MM/DD/YYYY" /></div>
+            <div class="layui-inline"><input id="dateTo" class="layui-input" placeholder="MM/DD/YYYY" /></div>
+            <button class="layui-btn layui-btn-sm" id="runBtn">Run Reconciliation</button>
+        </div>
+        <div id="result"></div>
+        <h3 style="margin-top:20px">Anomalies</h3>
+        <table id="anomaliesTable" lay-filter="anomaliesTable"></table>
+    </div>
+</div>
+{/block}
+{block name="scripts"}
+<script>
+layui.use(['table'], function(){
+    var table = layui.table;
+    table.render({
+        elem: '#anomaliesTable',
+        url: '/api/finance/reconciliation/anomalies',
+        method: 'get',
+        parseData: function(res){ return {code:0, count:(res.data||[]).length, data:res.data}; },
+        cols: [[
+            {field:'id', title:'ID', width:70},
+            {field:'flag_type', title:'Type', width:200},
+            {field:'details', title:'Details', minWidth:300},
+            {field:'status', title:'Status', width:120},
+            {field:'created_at', title:'Created', width:180}
+        ]],
+        page: false
+    });
+
+    document.getElementById('runBtn').addEventListener('click', function(){
+        var body = {dateFrom: document.getElementById('dateFrom').value, dateTo: document.getElementById('dateTo').value};
+        PP.post('/api/finance/reconciliation/run', body).then(function(res){
+            document.getElementById('result').textContent = JSON.stringify(res.data, null, 2);
+            table.reload('anomaliesTable');
+        });
+    });
+});
+</script>
+{/block}

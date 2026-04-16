@@ -1,0 +1,31 @@
+{extend name="layout/base" /}
+{block name="content"}
+<div class="pp-card">
+    <div class="pp-card-header">Audit Logs</div>
+    <div class="pp-card-body">
+        <table id="auditTable" lay-filter="auditTable"></table>
+    </div>
+</div>
+{/block}
+{block name="scripts"}
+<script>
+layui.use(['table'], function(){
+    layui.table.render({
+        elem: '#auditTable',
+        url: '/api/admin/audit/logs',
+        method: 'get',
+        parseData: function(res){ return {code:0, count:res.data.total, data:res.data.list}; },
+        cols: [[
+            {field:'id', title:'ID', width:70},
+            {field:'user_id', title:'User', width:80},
+            {field:'action', title:'Action', width:200},
+            {field:'entity_type', title:'Entity', width:120},
+            {field:'entity_id', title:'Entity ID', width:90},
+            {field:'ip_address', title:'IP', width:130},
+            {field:'created_at', title:'Timestamp', width:180}
+        ]],
+        page: true, limit: 50
+    });
+});
+</script>
+{/block}

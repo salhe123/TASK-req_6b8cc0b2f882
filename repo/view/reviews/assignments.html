@@ -1,0 +1,116 @@
+{extend name="layout/base" /}
+{block name="content"}
+<div class="pp-card">
+    <div class="pp-card-header">My Review Assignments</div>
+    <div class="pp-card-body">
+        <table id="assignmentsTable" lay-filter="assignmentsTable"></table>
+    </div>
+</div>
+
+<!-- Inline submit form (no manual ID prompt) -->
+<div class="pp-card" id="submitPanel" style="display:none;margin-top:16px">
+    <div class="pp-card-header">Submit Review <span id="submitAssignmentLabel"></span></div>
+    <div class="pp-card-body">
+        <div style="margin-bottom:10px">
+            <label>Scorecard:
+                <select id="scorecardSelect" class="layui-input" style="width:320px;display:inline-block"></select>
+            </label>
+        </div>
+        <div id="dimensionsArea"></div>
+        <button class="layui-btn layui-btn-sm layui-btn-normal" id="submitReviewBtn">Submit</button>
+        <button class="layui-btn layui-btn-sm layui-btn-primary" id="cancelSubmitBtn">Cancel</button>
+    </div>
+</div>
+{/block}
+{block name="scripts"}
+<script>
+layui.use(['table','layer'], function(){
+    var table = layui.table;
+    var layer = layui.layer;
+    var $ = layui.$;
+    var currentAssignmentId = null;
+    var scorecardCache = [];
+
+    table.render({
+        elem: '#assignmentsTable',
+        url: '/api/reviews/assignments',
+        method: 'get',
+        parseData: function(res){ return {code:0, count:res.data.total, data:res.data.list}; },
+        cols: [[
+            {field:'id', title:'ID', width:70},
+            {field:'product_id', title:'Product', width:100},
+            {field:'reviewer_id', title:'Reviewer', width:100},
+            {field:'blind', title:'Blind', width:80, templet:function(d){ return d.blind ? 'Yes' : 'No'; }},
+            {field:'status', title:'Status', width:120, templet:function(d){ return PP.statusBadge(d.status); }},
+            {field:'assigned_at', title:'Assigned', width:180},
+            {title:'Actions', width:180, templet: function(d){
+                if (d.status === 'ASSIGNED') {
+                    return '<button class="layui-btn layui-btn-xs layui-btn-normal" onclick="PP_reviews.openSubmit('+d.id+')">Submit</button>';
+                }
+                return '';
+            }}
+        ]],
+        page: true, limit: 20
+    });
+
+    window.PP_reviews = {
+        openSubmit: function(assignmentId){
+            currentAssignmentId = assignmentId;
+            $('#submitAssignmentLabel').text('#' + assignmentId);
+            // Load scorecards into the dropdown
+            PP.get('/api/reviews/scorecards').then(function(res){
+                scorecardCache = res.data || [];
+                var opts = scorecardCache.map(function(sc){
+                    return '<option value="'+sc.id+'">'+sc.name+'</option>';
+                }).join('');
+                $('#scorecardSelect').html(opts);
+                PP_reviews.renderDimensions(scorecardCache[0]);
+                $('#submitPanel').show();
+            });
+        },
+        renderDimensions: function(sc){
+            if (!sc || !sc.dimensions) { $('#dimensionsArea').html(''); return; }
+            var html = '';
+            sc.dimensions.forEach(function(d){
+                html += '<div style="margin:8px 0"><b>'+d.name+' (weight '+d.weight+')</b>';
+                html += '<input type="number" min="1" max="5" value="4" data-dim="'+d.id+'" data-kind="score" class="layui-input" style="width:80px;display:inline-block;margin:0 8px">';
+                html += '<input type="text" placeholder="Narrative (required)" data-dim="'+d.id+'" data-kind="narrative" class="layui-input" style="width:360px;display:inline-block">';
+                html += '</div>';
+            });
+            $('#dimensionsArea').html(html);
+        },
+        submit: function(){
+            var scId = parseInt($('#scorecardSelect').val(), 10);
+            var ratings = [];
+            document.querySelectorAll('[data-dim]').forEach(function(el){
+                var dimId = parseInt(el.getAttribute('data-dim'), 10);
+                var kind = el.getAttribute('data-kind');
+                var r = ratings.find(function(x){ return x.dimensionId === dimId; });
+                if (!r) { r = { dimensionId: dimId }; ratings.push(r); }
+                r[kind === 'score' ? 'score' : 'narrative'] = kind === 'score' ? parseInt(el.value, 10) : el.value;
+            });
+            PP.post('/api/reviews/submissions', {
+                assignmentId: currentAssignmentId,
+                scorecardId: scId,
+                ratings: ratings
+            }).then(function(res){
+                if (res.code === 200) {
+                    layer.msg('Submitted', {icon:1});
+                    $('#submitPanel').hide();
+                    table.reload('assignmentsTable');
+                } else {
+                    layer.alert(res.message || 'Submit failed', {icon:2});
+                }
+            });
+        }
+    };
+
+    document.getElementById('scorecardSelect').addEventListener('change', function(){
+        var sc = scorecardCache.find(function(x){ return x.id === parseInt(this.value, 10); }.bind(this));
+        PP_reviews.renderDimensions(sc);
+    });
+    document.getElementById('submitReviewBtn').addEventListener('click', PP_reviews.submit);
+    document.getElementById('cancelSubmitBtn').addEventListener('click', function(){ $('#submitPanel').hide(); });
+});
+</script>
+{/block}

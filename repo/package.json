@@ -1,0 +1,13 @@
+{
+  "name": "precision-portal-e2e",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Cypress end-to-end specs for the Precision Portal. PHPUnit is the primary test gate (run via ./run_tests.sh); these specs are the optional browser harness.",
+  "scripts": {
+    "cypress:open": "cypress open --e2e",
+    "cypress:run": "cypress run --e2e"
+  },
+  "devDependencies": {
+    "cypress": "^13.6.0"
+  }
+}

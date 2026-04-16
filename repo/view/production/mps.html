@@ -1,0 +1,138 @@
+{extend name="layout/base" /}
+{block name="content"}
+<div class="pp-card">
+    <div class="pp-card-header">
+        Master Production Schedule (12-Week Rolling)
+        <button class="layui-btn layui-btn-sm layui-btn-normal" style="float:right" id="createBtn">
+            <i class="layui-icon layui-icon-addition"></i> New MPS Entry
+        </button>
+    </div>
+    <div class="pp-card-body">
+        <table id="mpsTable" lay-filter="mpsTable"></table>
+    </div>
+</div>
+
+<!-- Create / edit form (hidden until opened) -->
+<div class="pp-card" id="mpsForm" style="display:none; margin-top:16px">
+    <div class="pp-card-header" id="mpsFormTitle">New MPS Entry</div>
+    <div class="pp-card-body">
+        <input type="hidden" id="mpsId">
+        <div class="layui-form-item">
+            <label class="layui-form-label">Product ID</label>
+            <div class="layui-input-block"><input id="productId" class="layui-input" type="number" min="1"></div>
+        </div>
+        <div class="layui-form-item">
+            <label class="layui-form-label">Work Center</label>
+            <div class="layui-input-block"><input id="workCenterId" class="layui-input" type="number" min="1" value="1"></div>
+        </div>
+        <div class="layui-form-item">
+            <label class="layui-form-label">Week Start</label>
+            <div class="layui-input-block"><input id="weekStart" class="layui-input" placeholder="MM/DD/YYYY"></div>
+        </div>
+        <div class="layui-form-item">
+            <label class="layui-form-label">Quantity</label>
+            <div class="layui-input-block"><input id="quantity" class="layui-input" type="number" min="1"></div>
+        </div>
+        <button class="layui-btn layui-btn-sm layui-btn-normal" id="saveBtn">Save</button>
+        <button class="layui-btn layui-btn-sm layui-btn-warm" id="explodeBtn" style="display:none">Explode into Work Orders</button>
+        <button class="layui-btn layui-btn-sm layui-btn-primary" id="cancelBtn">Cancel</button>
+    </div>
+</div>
+{/block}
+{block name="scripts"}
+<script>
+layui.use(['table','layer'], function(){
+    var table = layui.table;
+    var layer = layui.layer;
+    var $ = layui.$;
+
+    function reload(){ table.reload('mpsTable'); }
+
+    table.render({
+        elem: '#mpsTable',
+        url: '/api/production/mps',
+        method: 'get',
+        parseData: function(res){ return {code:0, count:res.data.length, data:res.data}; },
+        cols: [[
+            {field:'id', title:'ID', width:70},
+            {field:'product_id', title:'Product', width:100},
+            {field:'work_center_id', title:'Work Center', width:120},
+            {field:'week_start', title:'Week Start', width:120},
+            {field:'quantity', title:'Quantity', width:100},
+            {field:'planned_hours', title:'Planned Hrs', width:110},
+            {field:'status', title:'Status', width:100, templet:function(d){ return PP.statusBadge(d.status); }},
+            {title:'Actions', minWidth:240, toolbar:'#mpsActions'}
+        ]],
+        page: false
+    });
+
+    window.PP_mps = {
+        edit: function(row){
+            $('#mpsFormTitle').text('Edit MPS Entry #' + row.id);
+            $('#mpsId').val(row.id);
+            $('#productId').val(row.product_id);
+            $('#workCenterId').val(row.work_center_id);
+            $('#weekStart').val(row.week_start);
+            $('#quantity').val(row.quantity);
+            $('#explodeBtn').show();
+            $('#mpsForm').show();
+        },
+        explode: function(id){
+            PP.post('/api/production/work-orders/explode', {mpsId: parseInt(id, 10)}).then(function(res){
+                if (res.code === 200) {
+                    layer.msg('Exploded into ' + res.data.workOrdersCreated + ' work orders', {icon:1});
+                } else {
+                    layer.alert(res.message || 'Explode failed', {icon:2});
+                }
+            });
+        },
+        remove: function(id){
+            if (!window.confirm('Delete MPS entry #' + id + '?')) return;
+            PP.del('/api/production/mps/' + id).then(function(){ layer.msg('Deleted', {icon:1}); reload(); });
+        }
+    };
+
+    $('#createBtn').on('click', function(){
+        $('#mpsFormTitle').text('New MPS Entry');
+        $('#mpsId').val('');
+        $('#productId').val(''); $('#workCenterId').val(1);
+        $('#weekStart').val(''); $('#quantity').val('');
+        $('#explodeBtn').hide();
+        $('#mpsForm').show();
+    });
+
+    $('#cancelBtn').on('click', function(){ $('#mpsForm').hide(); });
+
+    $('#saveBtn').on('click', function(){
+        var body = {
+            productId: parseInt($('#productId').val(), 10),
+            workCenterId: parseInt($('#workCenterId').val(), 10),
+            weekStart: $('#weekStart').val(),
+            quantity: parseInt($('#quantity').val(), 10),
+        };
+        var id = $('#mpsId').val();
+        var req = id ? PP.put('/api/production/mps/' + id, body) : PP.post('/api/production/mps', body);
+        req.then(function(res){
+            if (res.code === 200 || res.code === 201) {
+                layer.msg('Saved', {icon:1});
+                $('#mpsForm').hide();
+                reload();
+            } else {
+                layer.alert(res.message || 'Save failed', {icon:2});
+            }
+        });
+    });
+
+    $('#explodeBtn').on('click', function(){
+        var id = $('#mpsId').val();
+        if (!id) return;
+        PP_mps.explode(id);
+    });
+});
+</script>
+<script type="text/html" id="mpsActions">
+    <button class="layui-btn layui-btn-xs" onclick="PP_mps.edit({{JSON.stringify(d)}})">Edit</button>
+    <button class="layui-btn layui-btn-xs layui-btn-warm" onclick="PP_mps.explode({{d.id}})">Explode</button>
+    <button class="layui-btn layui-btn-xs layui-btn-danger" onclick="PP_mps.remove({{d.id}})">Delete</button>
+</script>
+{/block}

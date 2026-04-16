@@ -1,0 +1,53 @@
+{extend name="layout/base" /}
+
+{block name="content"}
+<div class="pp-stats-grid" id="statsGrid">
+    <!-- Stats loaded via AJAX based on role -->
+</div>
+
+<div class="pp-card">
+    <div class="pp-card-header">Welcome</div>
+    <div class="pp-card-body">
+        <p>Welcome to the Precision Portal. Use the sidebar navigation to access your workspace.</p>
+    </div>
+</div>
+{/block}
+
+{block name="scripts"}
+<script>
+layui.use(['layer'], function () {
+    var $ = layui.$;
+
+    // Role-aware dashboard endpoint — returns { role, stats: {...} } scoped to
+    // the caller's role. Label map renders whichever keys the server returns.
+    $.get('/api/dashboard', function (res) {
+        if (res.code !== 200 || !res.data) return;
+        var stats = res.data.stats || {};
+        var labels = {
+            totalUsers:            'Total Users',
+            totalAppointments:     'Appointments',
+            pendingAppointments:   'Pending Appointments',
+            totalWorkOrders:       'Work Orders',
+            openWorkOrders:        'Open Work Orders',
+            pendingModeration:     'Pending Moderation',
+            assignedReviews:       'Assigned Reviews',
+            openAnomalies:         'Open Anomalies',
+            pendingPayments:       'Pending Payments',
+            weeklySettlementTotal: 'Weekly Settlement',
+        };
+        var html = '';
+        Object.keys(stats).forEach(function (k) {
+            var v = stats[k];
+            if (k === 'weeklySettlementTotal' && typeof v === 'number') {
+                v = '$' + v.toFixed(2);
+            }
+            html += '<div class="pp-stat-card">';
+            html += '<div class="pp-stat-value">' + v + '</div>';
+            html += '<div class="pp-stat-label">' + (labels[k] || k) + '</div>';
+            html += '</div>';
+        });
+        $('#statsGrid').html(html);
+    });
+});
+</script>
+{/block}

@@ -1,0 +1,60 @@
+{extend name="layout/base" /}
+{block name="content"}
+<div class="pp-card">
+    <div class="pp-card-header">Payments</div>
+    <div class="pp-card-body">
+        <div style="margin-bottom:15px">
+            <input type="file" id="csvFile" accept=".csv" style="display:inline-block">
+            <input type="text" id="csvChecksum" placeholder="SHA-256 checksum" class="layui-input" style="width:420px;display:inline-block;vertical-align:middle">
+            <button class="layui-btn layui-btn-sm layui-btn-normal" id="importBtn">Import CSV</button>
+            <span style="color:#999;font-size:12px">Checksum is required (SHA-256 over the file bytes).</span>
+        </div>
+        <table id="paymentTable" lay-filter="paymentTable"></table>
+    </div>
+</div>
+{/block}
+{block name="scripts"}
+<script>
+layui.use(['table','layer'], function(){
+    var table = layui.table;
+    var layer = layui.layer;
+    table.render({
+        elem: '#paymentTable',
+        url: '/api/finance/payments',
+        method: 'get',
+        parseData: function(res){ return {code:0, count:res.data.total, data:res.data.list}; },
+        cols: [[
+            {field:'id', title:'ID', width:70},
+            {field:'payer_name', title:'Payer', minWidth:150},
+            {field:'amount', title:'Amount', width:110},
+            {field:'reference', title:'Reference', width:150},
+            {field:'payment_date', title:'Date', width:120},
+            {field:'status', title:'Status', width:110, templet:function(d){ return PP.statusBadge(d.status); }}
+        ]],
+        page: true, limit: 20
+    });
+
+    document.getElementById('importBtn').addEventListener('click', function(){
+        var f = document.getElementById('csvFile').files[0];
+        var cs = document.getElementById('csvChecksum').value.trim();
+        if (!f) { layer.msg('Pick a CSV file', {icon:2}); return; }
+        if (!cs) { layer.msg('Checksum is required', {icon:2}); return; }
+        var fd = new FormData();
+        fd.append('file', f);
+        fd.append('checksum', cs);
+        fetch('/api/finance/payments/import', {
+            method: 'POST', credentials: 'same-origin',
+            headers: {'X-CSV-Checksum': cs},
+            body: fd,
+        }).then(function(r){ return r.json(); }).then(function(res){
+            if (res.code === 200) {
+                layer.msg('Imported '+res.data.imported+' rows', {icon:1});
+                table.reload('paymentTable');
+            } else {
+                layer.alert(res.message || 'Import rejected', {icon:2});
+            }
+        });
+    });
+});
+</script>
+{/block}

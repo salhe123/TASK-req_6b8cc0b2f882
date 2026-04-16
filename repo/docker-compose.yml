@@ -1,0 +1,50 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: precision-portal-app
+    ports:
+      - "8080:80"
+    volumes:
+      - .:/var/www/html
+      - /var/www/html/vendor
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      APP_DEBUG: "true"
+      DATABASE_HOSTNAME: mysql
+      DATABASE_DATABASE: precision_portal
+      DATABASE_USERNAME: portal_user
+      DATABASE_PASSWORD: portal_secret
+      DATABASE_HOSTPORT: "3306"
+    networks:
+      - portal-net
+
+  mysql:
+    image: mysql:8.0
+    container_name: precision-portal-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: root_secret
+      MYSQL_DATABASE: precision_portal
+      MYSQL_USER: portal_user
+      MYSQL_PASSWORD: portal_secret
+    ports:
+      - "3307:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-proot_secret"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    networks:
+      - portal-net
+
+volumes:
+  mysql_data:
+
+networks:
+  portal-net:
+    driver: bridge

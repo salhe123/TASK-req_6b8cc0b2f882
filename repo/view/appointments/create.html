@@ -1,0 +1,46 @@
+{extend name="layout/base" /}
+{block name="content"}
+<div class="pp-card">
+    <div class="pp-card-header">New Appointment</div>
+    <div class="pp-card-body">
+        <form class="layui-form" id="createForm">
+            <div class="layui-form-item">
+                <label class="layui-form-label">Customer ID</label>
+                <div class="layui-input-block"><input type="number" name="customerId" class="layui-input" required lay-verify="required"></div>
+            </div>
+            <div class="layui-form-item">
+                <label class="layui-form-label">Provider ID</label>
+                <div class="layui-input-block"><input type="number" name="providerId" class="layui-input" required lay-verify="required"></div>
+            </div>
+            <div class="layui-form-item">
+                <label class="layui-form-label">Date/Time</label>
+                <div class="layui-input-block"><input type="text" name="dateTime" class="layui-input" placeholder="MM/DD/YYYY hh:mm AM/PM" required lay-verify="required"></div>
+            </div>
+            <div class="layui-form-item">
+                <label class="layui-form-label">Location</label>
+                <div class="layui-input-block"><input type="text" name="location" class="layui-input" required lay-verify="required"></div>
+            </div>
+            <div class="pp-form-actions">
+                <div class="layui-input-block">
+                    <button class="layui-btn" lay-submit lay-filter="createAppt">Create Appointment</button>
+                    <a href="/appointments" class="layui-btn layui-btn-primary">Cancel</a>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+{/block}
+{block name="scripts"}
+<script>
+layui.use(['form','layer'], function(){
+    var form = layui.form, layer = layui.layer;
+    form.on('submit(createAppt)', function(data){
+        PP.post('/api/appointments', data.field).then(function(res){
+            if(res.code===201){ layer.msg('Created!',{icon:1},function(){location.href='/appointments';}); }
+            else { layer.msg(res.message,{icon:2}); }
+        });
+        return false;
+    });
+});
+</script>
+{/block}

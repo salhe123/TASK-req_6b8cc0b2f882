@@ -1,0 +1,72 @@
+{extend name="layout/base" /}
+{block name="content"}
+<div class="pp-card">
+    <div class="pp-card-header">Moderation Queue</div>
+    <div class="pp-card-body" id="moderationList"></div>
+</div>
+{/block}
+{block name="scripts"}
+<script>
+layui.use(['layer','form'], function(){
+    var $ = layui.$, layer = layui.layer;
+
+    function load(){
+        $.get('/api/moderation/pending', function(res){
+            if (res.code !== 200) { return; }
+            var items = res.data.list || [];
+            var html = '';
+            if (!items.length) { html = '<p>No pending items.</p>'; }
+            items.forEach(function(item){
+                html += '<div class="pp-card" style="margin-bottom:10px;padding:15px">';
+                html += '<strong>[' + item.type + ']</strong> ';
+                if (item.type === 'PRODUCT') {
+                    html += (item.name || 'Product #' + item.id) + ' ' + PP.statusBadge(item.status || 'SUBMITTED');
+                    html += '<div style="float:right">';
+                    html += '<button class="layui-btn layui-btn-xs" onclick="PP_mod.approveProduct(' + item.id + ')">Approve</button> ';
+                    html += '<button class="layui-btn layui-btn-xs layui-btn-danger" onclick="PP_mod.rejectProduct(' + item.id + ')">Reject</button>';
+                    html += '</div>';
+                } else if (item.type === 'MERGE') {
+                    var d = item.details || {};
+                    var a = d.productA || item.item_id, b = d.productB, sim = d.similarity;
+                    html += 'Merge candidates: #' + a + ' vs #' + b + ' (similarity ' + sim + ')';
+                    html += '<div style="float:right">';
+                    html += '<button class="layui-btn layui-btn-xs" onclick="PP_mod.merge(' + a + ',' + b + ',' + a + ')">Keep #' + a + '</button> ';
+                    html += '<button class="layui-btn layui-btn-xs" onclick="PP_mod.merge(' + a + ',' + b + ',' + b + ')">Keep #' + b + '</button> ';
+                    html += '<button class="layui-btn layui-btn-xs layui-btn-primary" onclick="PP_mod.distinct(' + a + ',' + b + ')">Mark Distinct</button>';
+                    html += '</div>';
+                }
+                html += '</div>';
+            });
+            $('#moderationList').html(html);
+        });
+    }
+
+    window.PP_mod = {
+        approveProduct: function(id){
+            PP.post('/api/moderation/bulk-action', {ids: [id], action: 'APPROVE'}).then(function(){ layer.msg('Approved', {icon:1}); load(); });
+        },
+        rejectProduct: function(id){
+            PP.post('/api/moderation/bulk-action', {ids: [id], action: 'REJECT'}).then(function(){ layer.msg('Rejected', {icon:1}); load(); });
+        },
+        merge: function(a, b, keepId){
+            PP.post('/api/moderation/merge-review', {
+                productIdA: a, productIdB: b, action: 'MERGE', keepId: keepId,
+            }).then(function(res){
+                if (res.code === 200) { layer.msg('Merged', {icon:1}); load(); }
+                else layer.alert(res.message || 'Merge failed', {icon:2});
+            });
+        },
+        distinct: function(a, b){
+            PP.post('/api/moderation/merge-review', {
+                productIdA: a, productIdB: b, action: 'DISTINCT', keepId: null,
+            }).then(function(res){
+                if (res.code === 200) { layer.msg('Marked distinct', {icon:1}); load(); }
+                else layer.alert(res.message || 'Failed', {icon:2});
+            });
+        }
+    };
+
+    load();
+});
+</script>
+{/block}

@@ -1,0 +1,13 @@
+vendor/
+runtime/*
+!runtime/.gitkeep
+storage/uploads/
+.env
+*.log
+.phpunit.result.cache
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+node_modules/
