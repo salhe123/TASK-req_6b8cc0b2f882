@@ -29,9 +29,14 @@ class Appointment extends Model
     public function setLocationAttr($value): string
     {
         if (is_string($value) && $value !== '') {
-            $this->data['location_encrypted'] = encrypt_field($value);
+            // Use __set (via property assignment) so ThinkPHP's Attribute
+            // concern writes to its private `$data` store. Writing
+            // `$this->data['key'] = ...` directly would go through __get,
+            // return a copy of the array, and trigger PHP's "indirect
+            // modification of overloaded property" error.
+            $this->location_encrypted = encrypt_field($value);
             $hint = trim(preg_split('/[,;]/', $value)[0] ?? '');
-            $this->data['location_hint'] = mb_substr($hint, 0, 16);
+            $this->location_hint = mb_substr($hint, 0, 16);
         }
         // Persist an empty string into the legacy `location` column — the real
         // value only ever lives in `location_encrypted` (ciphertext).

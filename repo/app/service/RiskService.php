@@ -142,7 +142,7 @@ class RiskService
         }
 
         $userScore = $latestScore !== null ? (float) $latestScore : 100;
-        $ipScore   = $ipRow['ipScore'] ?? 100;
+        $ipScore   = is_array($ipRow) && array_key_exists('ipScore', $ipRow) ? (float) $ipRow['ipScore'] : 100;
 
         if ($userScore >= $stepUpAt && $ipScore >= $stepUpAt) {
             return false;

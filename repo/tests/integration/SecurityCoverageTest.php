@@ -176,11 +176,15 @@ class SecurityCoverageTest extends IntegrationTestCase
         FinanceService::generateReceipt($pid, 77.00, date('Y-m-d H:i:s'));
         $receipt = Db::name('receipts')->where('payment_id', $pid)->find();
 
-        $signData = $receipt['receipt_number'] . '|' . $receipt['amount'] . '|' . $receipt['issued_at'];
+        // Both sides must concatenate the amount the same way. The DB returns
+        // "77.00" as a string (DECIMAL), but `(float) "77.00"` becomes 77 when
+        // cast in a string context. Keep the string form on both ends.
+        $amountStr = $receipt['amount'];
+        $signData = $receipt['receipt_number'] . '|' . $amountStr . '|' . $receipt['issued_at'];
         $sig = hmac_sign($signData);
         $r = FinanceService::validateCallback([
             'receiptNumber' => $receipt['receipt_number'],
-            'amount'        => (float) $receipt['amount'],
+            'amount'        => $amountStr,
             'issuedAt'      => $receipt['issued_at'],
             'signature'     => $sig,
         ]);
@@ -189,7 +193,19 @@ class SecurityCoverageTest extends IntegrationTestCase
 
     public function testStepUpHoldFlagCreatedWhenScoreLow()
     {
-        // Seed low risk score for user 4
+        // Ensure the step-up threshold exists and is reachable from the
+        // seeded low score below (the test-env entrypoint sometimes bumps
+        // other throttle rows — this one is left alone, but we also insert
+        // the row if absent so the test is self-contained).
+        $exists = Db::name('throttle_config')->where('key', 'step_up_score_below')->find();
+        if (!$exists) {
+            Db::name('throttle_config')->insert([
+                'key' => 'step_up_score_below', 'value' => 50,
+                'description' => 'Risk/IP score below which step-up applies',
+                'created_at' => date('Y-m-d H:i:s'), 'updated_at' => date('Y-m-d H:i:s'),
+            ]);
+        }
+
         Db::name('risk_scores')->insert([
             'user_id' => 4, 'score' => 10.0, 'success_rate' => 0.1,
             'dispute_rate' => 0.5, 'cancellation_rate' => 0.5,
