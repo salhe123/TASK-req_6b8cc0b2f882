@@ -11,3 +11,4 @@ storage/uploads/
 *.swo
 .DS_Store
 node_modules/
+.env.example
