@@ -1,5 +1,7 @@
 # Precision Hardware Manufacturing & Service Operations Portal
 
+**Project Type:** `fullstack`
+
 A full-stack offline-capable portal for a U.S.-based electronics manufacturer. It unifies production planning (MPS/MRP), service appointment scheduling, expert product reviews, hardware catalog management with deduplication, content moderation, financial settlement operations, and risk/credit controls — all with strict RBAC, immutable audit logging, and transactional integrity.
 
 ## Architecture & Tech Stack
@@ -60,9 +62,25 @@ To ensure a consistent environment, this project is designed to run entirely wit
    docker-compose down -v
    ```
 
+## Environment Rules (Strict)
+
+This project is designed to run fully inside Docker containers.
+
+Do **not** use local runtime/package installation commands such as:
+* `npm install`
+* `pip install`
+* `apt-get`
+* manual DB creation/migration outside the provided container flow
+
+Use only:
+* `docker-compose up ...` / `docker-compose down ...` for app lifecycle
+* `./run_tests.sh` for the primary backend test gate
+
 ## Testing
 
-All unit, integration, and E2E tests are executed via a single, standardized shell script. This script automatically handles any necessary container orchestration for the test environment.
+Primary automated gate (Dockerized): PHPUnit unit + integration + API suites via `run_tests.sh`.
+
+Optional browser E2E harness: Cypress specs under `cypress/e2e` (run separately when needed).
 
 Make sure the script is executable, then run it:
 
@@ -71,6 +89,39 @@ chmod +x run_tests.sh
 ./run_tests.sh
 ```
 *Note: The `run_tests.sh` script should output a standard exit code (`0` for success, non-zero for failure) to integrate smoothly with CI/CD validators.*
+
+Optional Cypress run:
+```bash
+npm run cypress:run
+```
+
+## Verification Method
+
+After startup (`docker-compose up --build -d`), verify both API and UI behavior:
+
+1. **Health/API Check (curl)**
+   ```bash
+   curl -s http://localhost:8080/api/health
+   ```
+   Expected: JSON response with `status` equal to `ok`.
+
+2. **Authentication Check (API)**
+   Use curl or Postman to call:
+   * `POST http://localhost:8080/api/auth/login`
+   * Body example:
+     ```json
+     {
+       "username": "admin",
+       "password": "Admin12345!"
+     }
+     ```
+   Expected: success response containing a role/token payload.
+
+3. **UI Flow Check (Browser)**
+   * Open `http://localhost:8080/login`
+   * Log in with a seeded account (for example `admin / Admin12345!`)
+   * Confirm dashboard loads and module navigation is visible
+   * Open one module page (for example `/appointments` or `/finance/payments`) and confirm data renders without 401/403 errors for authorized role
 
 ## Seeded Credentials
 
