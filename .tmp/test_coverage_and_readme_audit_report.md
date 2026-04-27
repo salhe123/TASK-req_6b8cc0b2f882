@@ -1,317 +1,352 @@
-# Test Coverage And README Audit Report
+# Test Coverage Audit
 
-## Stack Reality Check
+## Scope & Method
+- Mode: static inspection only (no test execution, no app/runtime execution).
+- Route source: `route/app.php:9-213` (API endpoints only).
+- HTTP test source: `tests/api/*.php` via `tests/ApiTestCase.php:13-106` (real curl HTTP client to `http://localhost:80`).
+- Non-HTTP test source: `tests/unit/*.php`, `tests/integration/*.php`.
 
-This repository is a **ThinkPHP 6.1 (PHP 8.1) + Layui 2.9 + MySQL 8.0** full-stack
-application delivered as a Docker-orchestrated project (see `repo/metadata.json:4-8`,
-`repo/composer.json`, `repo/route/app.php`, `repo/view/`). The prior revision of this
-report asserted a Flask + HTMX + pytest stack; those claims were incorrect and have
-been removed. All tests execute under **PHPUnit** inside a self-contained Docker
-image (`precision-portal-tests`) built from `repo/Dockerfile.test` and driven by
-`repo/run_tests.sh`.
+## Project Type Detection
+- README does not explicitly declare one of the required top labels (`backend|fullstack|web|android|ios|desktop`) at the top.
+- Inferred type: **fullstack**.
+- Evidence: `README.md:3` ("full-stack"), `README.md:7-8` (frontend + backend stack both declared).
+
+## Backend Endpoint Inventory
+1. GET `/api/health`
+2. POST `/api/auth/login`
+3. POST `/api/auth/logout`
+4. POST `/api/auth/change-password`
+5. GET `/api/admin/users`
+6. POST `/api/admin/users`
+7. PUT `/api/admin/users/:id/lock`
+8. PUT `/api/admin/users/:id/unlock`
+9. PUT `/api/admin/users/:id`
+10. GET `/api/appointments`
+11. POST `/api/appointments`
+12. GET `/api/appointments/:id`
+13. GET `/api/appointments/:id/history`
+14. PUT `/api/appointments/:id/confirm`
+15. PUT `/api/appointments/:id/reschedule`
+16. PUT `/api/appointments/:id/cancel`
+17. PUT `/api/appointments/:id/repair`
+18. PUT `/api/appointments/:id/check-in`
+19. PUT `/api/appointments/:id/check-out`
+20. POST `/api/appointments/:id/attachments`
+21. GET `/api/appointments/:id/attachments`
+22. GET `/api/provider/queue`
+23. GET `/api/production/work-centers`
+24. GET `/api/production/work-centers/:id`
+25. POST `/api/production/work-centers`
+26. PUT `/api/production/work-centers/:id`
+27. DELETE `/api/production/work-centers/:id`
+28. GET `/api/production/mps`
+29. POST `/api/production/mps`
+30. PUT `/api/production/mps/:id`
+31. DELETE `/api/production/mps/:id`
+32. GET `/api/production/work-orders`
+33. GET `/api/production/work-orders/:id`
+34. GET `/api/production/work-orders/:id/history`
+35. POST `/api/production/work-orders/explode`
+36. PUT `/api/production/work-orders/:id/start`
+37. PUT `/api/production/work-orders/:id/complete`
+38. PUT `/api/production/work-orders/:id/repair`
+39. GET `/api/production/capacity`
+40. GET `/api/catalog/products`
+41. POST `/api/catalog/products`
+42. GET `/api/catalog/products/duplicates`
+43. GET `/api/catalog/products/:id`
+44. PUT `/api/catalog/products/:id`
+45. POST `/api/catalog/products/:id/submit`
+46. GET `/api/moderation/pending`
+47. POST `/api/moderation/bulk-action`
+48. POST `/api/moderation/merge-review`
+49. GET `/api/reviews/reviewers`
+50. POST `/api/reviews/reviewers`
+51. GET `/api/reviews/reviewers/:id/conflicts`
+52. POST `/api/reviews/assignments/auto`
+53. GET `/api/reviews/assignments`
+54. POST `/api/reviews/assignments`
+55. GET `/api/reviews/scorecards`
+56. POST `/api/reviews/scorecards`
+57. POST `/api/reviews/submissions/:id/publish`
+58. POST `/api/reviews/submissions`
+59. GET `/api/finance/payments`
+60. GET `/api/finance/payments/:id`
+61. POST `/api/finance/payments/import`
+62. GET `/api/finance/receipts`
+63. POST `/api/finance/receipts/callback`
+64. GET `/api/finance/receipts/:id/verify`
+65. PUT `/api/finance/receipts/:id/bind`
+66. GET `/api/finance/receipts/:id`
+67. POST `/api/finance/reconciliation/run`
+68. GET `/api/finance/reconciliation/anomalies`
+69. GET `/api/finance/settlements`
+70. POST `/api/finance/settlements`
+71. GET `/api/finance/settlements/:id/report`
+72. GET `/api/admin/risk/scores`
+73. GET `/api/admin/risk/ip-scores`
+74. GET `/api/admin/risk/flags`
+75. PUT `/api/admin/risk/flags/:id/clear`
+76. GET `/api/admin/risk/throttles`
+77. PUT `/api/admin/risk/throttles`
+78. GET `/api/admin/audit/logs`
+79. GET `/api/dashboard`
+80. GET `/api/admin/dashboard`
+
+Evidence: `route/app.php:9-213`.
+
+## API Test Mapping Table
+
+| Endpoint | Covered | Test Type | Test Files | Evidence |
+|---|---|---|---|---|
+| GET `/api/health` | yes | true no-mock HTTP | `tests/api/AuthApiTest.php` | `testHealthEndpoint` (`tests/api/AuthApiTest.php:98-106`) |
+| POST `/api/auth/login` | yes | true no-mock HTTP | `tests/api/AuthApiTest.php` | `testLoginSuccess` (`tests/api/AuthApiTest.php:10-25`) |
+| POST `/api/auth/logout` | yes | true no-mock HTTP | `tests/api/AuthApiTest.php` | `testLogout` (`tests/api/AuthApiTest.php:56-66`) |
+| POST `/api/auth/change-password` | yes | true no-mock HTTP | `tests/api/AuthApiTest.php` | `testChangePasswordSuccess` (`tests/api/AuthApiTest.php:108-134`) |
+| GET `/api/admin/users` | yes | true no-mock HTTP | `tests/api/UserApiTest.php` | `testListUsers` (`tests/api/UserApiTest.php:10-30`) |
+| POST `/api/admin/users` | yes | true no-mock HTTP | `tests/api/UserApiTest.php` | `testCreateUser` (`tests/api/UserApiTest.php:45-61`) |
+| PUT `/api/admin/users/:id/lock` | yes | true no-mock HTTP | `tests/api/UserApiTest.php` | `testLockUser` (`tests/api/UserApiTest.php:75-92`) |
+| PUT `/api/admin/users/:id/unlock` | yes | true no-mock HTTP | `tests/api/UserApiTest.php` | `testUnlockUser` (`tests/api/UserApiTest.php:94-111`) |
+| PUT `/api/admin/users/:id` | yes | true no-mock HTTP | `tests/api/UserApiTest.php` | `testUpdateUserRole` (`tests/api/UserApiTest.php:121-134`) |
+| GET `/api/appointments` | yes | true no-mock HTTP | `tests/api/AppointmentApiTest.php` | `testListAppointments` (`tests/api/AppointmentApiTest.php:195-204`) |
+| POST `/api/appointments` | yes | true no-mock HTTP | `tests/api/AppointmentApiTest.php` | `testCreateAppointment` (`tests/api/AppointmentApiTest.php:10-26`) |
+| GET `/api/appointments/:id` | yes | true no-mock HTTP | `tests/api/AppointmentApiTest.php` | `testGetAppointment` (`tests/api/AppointmentApiTest.php:206-221`) |
+| GET `/api/appointments/:id/history` | yes | true no-mock HTTP | `tests/api/AppointmentApiTest.php` | `testFullLifecycle` (`tests/api/AppointmentApiTest.php:62-66`) |
+| PUT `/api/appointments/:id/confirm` | yes | true no-mock HTTP | `tests/api/AppointmentApiTest.php` | `testFullLifecycle` (`tests/api/AppointmentApiTest.php:40-44`) |
+| PUT `/api/appointments/:id/reschedule` | yes | true no-mock HTTP | `tests/api/AppointmentApiTest.php` | `testRescheduleSuccess` (`tests/api/AppointmentApiTest.php:231-247`) |
+| PUT `/api/appointments/:id/cancel` | yes | true no-mock HTTP | `tests/api/AppointmentApiTest.php` | `testCancelPending` (`tests/api/AppointmentApiTest.php:73-86`) |
+| PUT `/api/appointments/:id/repair` | yes | true no-mock HTTP | `tests/api/AppointmentApiTest.php` | `testAdminRepair` (`tests/api/AppointmentApiTest.php:174-193`) |
+| PUT `/api/appointments/:id/check-in` | yes | true no-mock HTTP | `tests/api/AppointmentApiTest.php` | `testFullLifecycle` (`tests/api/AppointmentApiTest.php:45-50`) |
+| PUT `/api/appointments/:id/check-out` | yes | true no-mock HTTP | `tests/api/AppointmentApiTest.php` | `testFullLifecycle` (`tests/api/AppointmentApiTest.php:55-59`) |
+| POST `/api/appointments/:id/attachments` | yes | true no-mock HTTP | `tests/api/AppointmentApiTest.php` | `testUploadAttachmentNoFile` (`tests/api/AppointmentApiTest.php:340-355`) |
+| GET `/api/appointments/:id/attachments` | yes | true no-mock HTTP | `tests/api/AppointmentApiTest.php` | `testListAttachments` (`tests/api/AppointmentApiTest.php:268-281`) |
+| GET `/api/provider/queue` | yes | true no-mock HTTP | `tests/api/AppointmentApiTest.php` | `testProviderQueue` (`tests/api/AppointmentApiTest.php:283-305`) |
+| GET `/api/production/work-centers` | yes | true no-mock HTTP | `tests/api/ProductionApiTest.php` | `testListWorkCenters` (`tests/api/ProductionApiTest.php:10-21`) |
+| GET `/api/production/work-centers/:id` | yes | true no-mock HTTP | `tests/api/ProductionApiTest.php` | `testGetWorkCenterById` (`tests/api/ProductionApiTest.php:185-200`) |
+| POST `/api/production/work-centers` | yes | true no-mock HTTP | `tests/api/ProductionApiTest.php` | `testCreateWorkCenter` (`tests/api/ProductionApiTest.php:23-35`) |
+| PUT `/api/production/work-centers/:id` | yes | true no-mock HTTP | `tests/api/ProductionApiTest.php` | `testUpdateWorkCenter` (`tests/api/ProductionApiTest.php:154-166`) |
+| DELETE `/api/production/work-centers/:id` | yes | true no-mock HTTP | `tests/api/ProductionApiTest.php` | `testDeleteWorkCenter` (`tests/api/ProductionApiTest.php:202-219`) |
+| GET `/api/production/mps` | yes | true no-mock HTTP | `tests/api/ProductionApiTest.php` | `testListMps` (`tests/api/ProductionApiTest.php:145-152`) |
+| POST `/api/production/mps` | yes | true no-mock HTTP | `tests/api/ProductionApiTest.php` | `testMpsExplodeComplete` (`tests/api/ProductionApiTest.php:37-50`) |
+| PUT `/api/production/mps/:id` | yes | true no-mock HTTP | `tests/api/ProductionApiTest.php` | `testUpdateMps` (`tests/api/ProductionApiTest.php:96-107`) |
+| DELETE `/api/production/mps/:id` | yes | true no-mock HTTP | `tests/api/ProductionApiTest.php` | `testDeleteMps` (`tests/api/ProductionApiTest.php:109-120`) |
+| GET `/api/production/work-orders` | yes | true no-mock HTTP | `tests/api/ProductionApiTest.php` | `testListWorkOrdersWithFilter` (`tests/api/ProductionApiTest.php:237-245`) |
+| GET `/api/production/work-orders/:id` | yes | true no-mock HTTP | `tests/api/ProductionApiTest.php` | `testGetWorkOrder` (`tests/api/ProductionApiTest.php:122-143`) |
+| GET `/api/production/work-orders/:id/history` | no | none | - | no HTTP request found in `tests/api/*.php` |
+| POST `/api/production/work-orders/explode` | yes | true no-mock HTTP | `tests/api/ProductionApiTest.php` | `testMpsExplodeComplete` (`tests/api/ProductionApiTest.php:51-57`) |
+| PUT `/api/production/work-orders/:id/start` | yes | true no-mock HTTP | `tests/api/ProductionApiTest.php` | `testMpsExplodeComplete` (`tests/api/ProductionApiTest.php:64-67`) |
+| PUT `/api/production/work-orders/:id/complete` | yes | true no-mock HTTP | `tests/api/ProductionApiTest.php` | `testMpsExplodeComplete` (`tests/api/ProductionApiTest.php:67-78`) |
+| PUT `/api/production/work-orders/:id/repair` | no | none | - | no HTTP request found in `tests/api/*.php` |
+| GET `/api/production/capacity` | yes | true no-mock HTTP | `tests/api/ProductionApiTest.php` | `testCapacityLoading` (`tests/api/ProductionApiTest.php:80-94`) |
+| GET `/api/catalog/products` | yes | true no-mock HTTP | `tests/api/CatalogApiTest.php` | `testListProductsWithFilters` (`tests/api/CatalogApiTest.php:52-61`) |
+| POST `/api/catalog/products` | yes | true no-mock HTTP | `tests/api/CatalogApiTest.php` | `testCreateProduct` (`tests/api/CatalogApiTest.php:10-25`) |
+| GET `/api/catalog/products/duplicates` | yes | true no-mock HTTP | `tests/api/CatalogApiTest.php` | `testDuplicates` (`tests/api/CatalogApiTest.php:78-85`) |
+| GET `/api/catalog/products/:id` | yes | true no-mock HTTP | `tests/api/BlindReviewProductReadApiTest.php` | `testBlindAssignedReviewerSeesMaskedProduct` (`tests/api/BlindReviewProductReadApiTest.php:34-58`) |
+| PUT `/api/catalog/products/:id` | yes | true no-mock HTTP | `tests/api/CatalogOwnershipApiTest.php` | `testCrossSpecialistCannotModifyOrSubmit` (`tests/api/CatalogOwnershipApiTest.php:41-47`) |
+| POST `/api/catalog/products/:id/submit` | yes | true no-mock HTTP | `tests/api/CatalogApiTest.php` | `testSubmitProduct` (`tests/api/CatalogApiTest.php:27-50`) |
+| GET `/api/moderation/pending` | yes | true no-mock HTTP | `tests/api/ModerationApiTest.php` | `testPendingQueue` (`tests/api/ModerationApiTest.php:23-34`) |
+| POST `/api/moderation/bulk-action` | yes | true no-mock HTTP | `tests/api/ModerationApiTest.php` | `testBulkApprove` (`tests/api/ModerationApiTest.php:36-52`) |
+| POST `/api/moderation/merge-review` | yes | true no-mock HTTP | `tests/api/ModerationApiTest.php` | `testMergeReviewMerge` (`tests/api/ModerationApiTest.php:77-94`) |
+| GET `/api/reviews/reviewers` | yes | true no-mock HTTP | `tests/api/ReviewApiTest.php` | `testListReviewers` (`tests/api/ReviewApiTest.php:110-135`) |
+| POST `/api/reviews/reviewers` | yes | true no-mock HTTP | `tests/api/ReviewApiTest.php` | `testCreateReviewer` (`tests/api/ReviewApiTest.php:137-149`) |
+| GET `/api/reviews/reviewers/:id/conflicts` | yes | true no-mock HTTP | `tests/api/ReviewApiTest.php` | `testGetConflicts` (`tests/api/ReviewApiTest.php:151-158`) |
+| POST `/api/reviews/assignments/auto` | yes | true no-mock HTTP | `tests/api/ReviewApiTest.php` | `testFullReviewFlow` (`tests/api/ReviewApiTest.php:70-77`) |
+| GET `/api/reviews/assignments` | no | none | - | no HTTP request found in `tests/api/*.php` |
+| POST `/api/reviews/assignments` | yes | true no-mock HTTP | `tests/api/ReviewApiTest.php` | `testManualAssignment` (`tests/api/ReviewApiTest.php:160-184`) |
+| GET `/api/reviews/scorecards` | yes | true no-mock HTTP | `tests/api/ReviewApiTest.php` | `testListScorecardsWithDimensions` (`tests/api/ReviewApiTest.php:186-197`) |
+| POST `/api/reviews/scorecards` | yes | true no-mock HTTP | `tests/api/ReviewApiTest.php` | `testCreateScorecard` (`tests/api/ReviewApiTest.php:10-26`) |
+| POST `/api/reviews/submissions/:id/publish` | yes | true no-mock HTTP | `tests/api/ReviewApiTest.php` | `testFullReviewFlow` (`tests/api/ReviewApiTest.php:104-108`) |
+| POST `/api/reviews/submissions` | yes | true no-mock HTTP | `tests/api/ReviewApiTest.php` | `testFullReviewFlow` (`tests/api/ReviewApiTest.php:89-103`) |
+| GET `/api/finance/payments` | yes | true no-mock HTTP | `tests/api/FinanceApiTest.php` | `testListPayments` (`tests/api/FinanceApiTest.php:10-20`) |
+| GET `/api/finance/payments/:id` | yes | true no-mock HTTP | `tests/api/FinanceApiTest.php` | `testGetPayment` (`tests/api/FinanceApiTest.php:112-133`) |
+| POST `/api/finance/payments/import` | yes | true no-mock HTTP | `tests/api/FinanceApiTest.php` | `testImportNoFile` (`tests/api/FinanceApiTest.php:163-169`) |
+| GET `/api/finance/receipts` | yes | true no-mock HTTP | `tests/api/FinanceApiTest.php` | `testListReceipts` (`tests/api/FinanceApiTest.php:22-30`) |
+| POST `/api/finance/receipts/callback` | yes | true no-mock HTTP | `tests/api/FinanceCallbackApiTest.php` | `testCallbackMissingSignatureReturns400` (`tests/api/FinanceCallbackApiTest.php:14-22`) |
+| GET `/api/finance/receipts/:id/verify` | yes | true no-mock HTTP | `tests/api/FinanceCallbackApiTest.php` | `testVerifyReceiptReachableByFinance` (`tests/api/FinanceCallbackApiTest.php:35-49`) |
+| PUT `/api/finance/receipts/:id/bind` | no | none | - | no HTTP request found in `tests/api/*.php` |
+| GET `/api/finance/receipts/:id` | yes | true no-mock HTTP | `tests/api/FinanceApiTest.php` | `testGetReceipt` (`tests/api/FinanceApiTest.php:135-153`) |
+| POST `/api/finance/reconciliation/run` | yes | true no-mock HTTP | `tests/api/FinanceApiTest.php` | `testRunReconciliation` (`tests/api/FinanceApiTest.php:32-48`) |
+| GET `/api/finance/reconciliation/anomalies` | yes | true no-mock HTTP | `tests/api/FinanceApiTest.php` | `testAnomalies` (`tests/api/FinanceApiTest.php:50-57`) |
+| GET `/api/finance/settlements` | yes | true no-mock HTTP | `tests/api/FinanceApiTest.php` | `testListSettlements` (`tests/api/FinanceApiTest.php:59-67`) |
+| POST `/api/finance/settlements` | yes | true no-mock HTTP | `tests/api/FinanceApiTest.php` | `testCreateSettlement` (`tests/api/FinanceApiTest.php:77-91`) |
+| GET `/api/finance/settlements/:id/report` | yes | true no-mock HTTP | `tests/api/FinanceApiTest.php` | `testSettlementReport` (`tests/api/FinanceApiTest.php:93-110`) |
+| GET `/api/admin/risk/scores` | yes | true no-mock HTTP | `tests/api/RiskApiTest.php` | `testListScores` (`tests/api/RiskApiTest.php:10-17`) |
+| GET `/api/admin/risk/ip-scores` | no | none | - | no HTTP request found in `tests/api/*.php` |
+| GET `/api/admin/risk/flags` | yes | true no-mock HTTP | `tests/api/RiskApiTest.php` | `testListFlags` (`tests/api/RiskApiTest.php:19-26`) |
+| PUT `/api/admin/risk/flags/:id/clear` | yes | true no-mock HTTP | `tests/api/RiskApiTest.php` | `testClearFlag` (`tests/api/RiskApiTest.php:73-91`) |
+| GET `/api/admin/risk/throttles` | yes | true no-mock HTTP | `tests/api/RiskApiTest.php` | `testGetThrottles` (`tests/api/RiskApiTest.php:28-41`) |
+| PUT `/api/admin/risk/throttles` | yes | true no-mock HTTP | `tests/api/RiskApiTest.php` | `testUpdateThrottles` (`tests/api/RiskApiTest.php:43-63`) |
+| GET `/api/admin/audit/logs` | yes | true no-mock HTTP | `tests/api/DashboardApiTest.php` | `testAuditLogs` (`tests/api/DashboardApiTest.php:35-51`) |
+| GET `/api/dashboard` | no | unit-only / indirect | `tests/integration/ControllerIntegrationTest.php` | `testDashboardIndex` calls controller directly (`tests/integration/ControllerIntegrationTest.php:140-149`) |
+| GET `/api/admin/dashboard` | yes | true no-mock HTTP | `tests/api/DashboardApiTest.php` | `testDashboardCounters` (`tests/api/DashboardApiTest.php:10-33`) |
+
+## API Test Classification
+
+1. True No-Mock HTTP
+- All `tests/api/*.php` classes extending `ApiTestCase`.
+- Evidence: real curl transport + URL requests in `tests/ApiTestCase.php:13-106`.
+
+2. HTTP with Mocking
+- **None found**.
+
+3. Non-HTTP (unit/integration without HTTP)
+- `tests/unit/*.php` (pure logic tests).
+- `tests/integration/*.php` service/controller/middleware in-process tests.
+- Direct controller invocation (bypass HTTP router): `tests/integration/ControllerIntegrationTest.php:15-20` and many methods.
+
+## Mock Detection
+- No explicit mocking framework calls detected (`jest.mock`, `vi.mock`, `sinon.stub`, `Mockery`, PHPUnit mock builders): search returned no matches in `tests/` and `app/`.
+- HTTP-layer bypass observed (not mocking, but not endpoint-level HTTP):
+  - direct controller calls via `call_user_func_array` in `tests/integration/ControllerIntegrationTest.php:15-20`.
+  - request object injection with `self::$app->instance('think\Request', $request)` in `tests/integration/ControllerIntegrationTest.php:29,41,63...`.
+
+## Coverage Summary
+- Total endpoints: **80**
+- Endpoints with HTTP tests: **74**
+- Endpoints with true no-mock HTTP tests: **74**
+- HTTP coverage: **90.89%**
+- True API coverage: **90.89%**
+- Uncovered endpoints:
+  - GET `/api/production/work-orders/:id/history`
+  - PUT `/api/production/work-orders/:id/repair`
+  - GET `/api/reviews/assignments`
+  - PUT `/api/finance/receipts/:id/bind`
+  - GET `/api/admin/risk/ip-scores`
+  - GET `/api/dashboard`
+
+## Unit Test Summary
+
+### Backend Unit Tests
+- Test files: `tests/unit/*.php` (12 files).
+- Controllers covered:
+  - Direct controller integration coverage exists (not unit): `tests/integration/ControllerIntegrationTest.php`.
+- Services covered:
+  - `AuthService`, `CatalogService`, `AppointmentService`, `ProductionService`, `FinanceService`, `ReviewService`, `ModerationService`, `RiskService`, `AuditService` (via unit/integration suites).
+- Repositories covered:
+  - No dedicated repository layer classes found; persistence tested via `Db::name(...)` in integration tests.
+- Auth/guards/middleware covered:
+  - `AuthMiddleware`, `ThrottleMiddleware` in `tests/integration/MiddlewareIntegrationTest.php:29-150`.
+  - Step-up behavior covered at API level (`tests/api/StepUpHoldApiTest.php:19-50`).
+
+Important backend modules not tested (or not directly endpoint-tested):
+- `production.WorkOrder/history` route handler endpoint path (no HTTP test).
+- `production.WorkOrder/repair` route handler endpoint path (no HTTP test).
+- `review.Review/listAssignments` endpoint path (no HTTP test).
+- `finance.Receipt/bind` endpoint path (no HTTP test).
+- `admin.Risk/ipScores` endpoint path (no HTTP test).
+- `admin.Dashboard/index` via `/api/dashboard` route path (no HTTP test for this alias).
+
+### Frontend Unit Tests (STRICT)
+- Frontend test files (`*.test.*` / `*.spec.*`): **NONE** (`find` returned empty).
+- Frameworks/tools detected for frontend unit tests: **NONE**.
+- Evidence of frontend test framework present only for E2E: Cypress (`package.json:5-11`, `cypress/e2e/*.cy.js`).
+- Tests importing/rendering frontend components/modules: **NONE**.
+- Important frontend modules/components not unit tested:
+  - global frontend runtime helper: `public/static/js/app.js:5-105`.
+  - page modules/templates under `view/` (e.g., `view/auth/login.html`, `view/dashboard/index.html`, `view/appointments/*.html`, `view/production/*.html`, `view/finance/*.html`, `view/catalog/products.html`).
+
+**Frontend unit tests: MISSING**
+
+**CRITICAL GAP**: project is fullstack, but no frontend unit-test suite is present.
+
+### Cross-Layer Observation
+- Testing is backend-heavy: strong API + backend unit/integration coverage, but zero frontend unit coverage.
+- Fullstack balance is insufficient under strict criteria.
+
+## API Observability Check
+- Strength: Most API tests explicitly show method/path, request payload, and response assertions.
+  - Example: `tests/api/AppointmentApiTest.php:33-70` (multi-step lifecycle with payload and response-field assertions).
+- Weak spots:
+  - Conditional assertions that may skip deep path checks if seed data absent (e.g., payment/receipt read tests): `tests/api/FinanceApiTest.php:121-131`, `:142-153`.
 
 ## Tests Check
+- Success paths: broadly present across auth/appointments/production/catalog/review/finance/risk.
+- Failure/validation paths: present (e.g., weak password, invalid role, missing fields, RBAC denial).
+- Edge cases: present in key areas (state transitions, checksum/signature, lockout, reschedule windows).
+- Auth/permissions: present across many role-protected endpoints.
+- Integration boundaries: present via integration suites + API suites.
+- Over-mocking risk: low (no explicit mocking libs detected).
+- `run_tests.sh` check: **Docker-based (OK)** (`run_tests.sh:7,13`).
 
-### Test Suites Present (from `repo/phpunit.xml`)
+## End-to-End Expectations (Fullstack)
+- Real FE↔BE E2E specs exist (`cypress/e2e/*.cy.js`), but they are optional and not part of primary gate (`package.json:5`, README notes optional Cypress at `README.md:23`).
+- Missing frontend unit tests are only partially compensated by backend API coverage + optional E2E.
 
-- **Unit** (`repo/tests/unit/`) — 12 files covering state machines, service-layer
-  logic, validation rules, and middleware units.
-- **Integration** (`repo/tests/integration/`) — 14 files exercising services +
-  controllers + schema in-process against a live MariaDB instance (no HTTP).
-- **API** (`repo/tests/api/`) — 14 files issuing real HTTP requests against a
-  `php -S` server on port 80, covering route + middleware + controller +
-  database end-to-end.
-
-No frontend-component test suite is present (the prior `tests/frontend/test_htmx.py`
-and `tests/e2e/test_full_workflow.py` claims were false — those files do not exist
-in the repository). An optional Cypress scaffold exists at `repo/cypress/e2e/`
-but is **not** run by `run_tests.sh`.
-
-## `run_tests.sh` Static Verification
-
-- `repo/run_tests.sh` exists, is executable, and runs `set -euo pipefail`
-  (`repo/run_tests.sh:2`).
-- Builds `Dockerfile.test` into an image tagged **`precision-portal-tests`**
-  (`repo/run_tests.sh:7`) — *not* `fieldservice-tests` as previously claimed.
-- Runs the container via `docker run --rm precision-portal-tests`
-  (`repo/run_tests.sh:13`).
-- Container entrypoint `repo/docker/run_tests_entry.sh` provisions MariaDB,
-  applies `database/schema.sql` + `database/seed.sql` + `database/seed.php`,
-  then runs `vendor/bin/phpunit` for Unit+Integration with coverage (Clover +
-  HTML), boots `php -S` on port 80, then runs the API suite — *not* `pytest`
-  as previously claimed.
-- Coverage gate is enforced at **85%** line coverage
-  (`repo/docker/run_tests_entry.sh:117`) — fails non-zero if unmet.
-- No host-local PHP/Node/Composer dependency in the primary flow.
-
-## Endpoint Inventory (from `repo/route/app.php`)
-
-All routes are prefixed `/api/*` unless marked as a frontend page route.
-
-| # | Method | Path | Controller | RBAC | Extra Middleware |
-|---|---|---|---|---|---|
-| 1 | GET | `/api/health` | `Index/health` | — | — |
-| 2 | POST | `/api/auth/login` | `auth.Auth/login` | — | — |
-| 3 | POST | `/api/auth/logout` | `auth.Auth/logout` | Auth | — |
-| 4 | POST | `/api/auth/change-password` | `auth.Auth/changePassword` | Auth | — |
-| 5 | GET | `/api/admin/users` | `admin.User/index` | SYSTEM_ADMIN | — |
-| 6 | POST | `/api/admin/users` | `admin.User/create` | SYSTEM_ADMIN | — |
-| 7 | PUT | `/api/admin/users/:id` | `admin.User/update` | SYSTEM_ADMIN | — |
-| 8 | PUT | `/api/admin/users/:id/lock` | `admin.User/lock` | SYSTEM_ADMIN | — |
-| 9 | PUT | `/api/admin/users/:id/unlock` | `admin.User/unlock` | SYSTEM_ADMIN | — |
-| 10 | GET | `/api/appointments` | `appointment.Appointment/index` | SERVICE_COORDINATOR, PROVIDER | — |
-| 11 | POST | `/api/appointments` | `appointment.Appointment/create` | SERVICE_COORDINATOR | Throttle, StepUp |
-| 12 | GET | `/api/appointments/:id` | `appointment.Appointment/read` | SERVICE_COORDINATOR, PROVIDER | — |
-| 13 | GET | `/api/appointments/:id/history` | `appointment.Appointment/history` | SERVICE_COORDINATOR, PROVIDER | — |
-| 14 | PUT | `/api/appointments/:id/confirm` | `appointment.Appointment/confirm` | SERVICE_COORDINATOR | — |
-| 15 | PUT | `/api/appointments/:id/reschedule` | `appointment.Appointment/reschedule` | SERVICE_COORDINATOR, SYSTEM_ADMIN | — |
-| 16 | PUT | `/api/appointments/:id/cancel` | `appointment.Appointment/cancel` | SERVICE_COORDINATOR | — |
-| 17 | PUT | `/api/appointments/:id/repair` | `appointment.Appointment/repair` | SYSTEM_ADMIN | — |
-| 18 | PUT | `/api/appointments/:id/check-in` | `appointment.Appointment/checkIn` | PROVIDER | — |
-| 19 | PUT | `/api/appointments/:id/check-out` | `appointment.Appointment/checkOut` | PROVIDER | — |
-| 20 | POST | `/api/appointments/:id/attachments` | `appointment.Appointment/uploadAttachment` | PROVIDER | — |
-| 21 | GET | `/api/appointments/:id/attachments` | `appointment.Appointment/listAttachments` | SERVICE_COORDINATOR, PROVIDER | — |
-| 22 | GET | `/api/provider/queue` | `provider.Queue/index` | PROVIDER | — |
-| 23 | GET | `/api/production/work-centers` | `production.WorkCenter/index` | PRODUCTION_PLANNER | — |
-| 24 | GET | `/api/production/work-centers/:id` | `production.WorkCenter/read` | PRODUCTION_PLANNER | — |
-| 25 | POST | `/api/production/work-centers` | `production.WorkCenter/create` | PRODUCTION_PLANNER | — |
-| 26 | PUT | `/api/production/work-centers/:id` | `production.WorkCenter/update` | PRODUCTION_PLANNER | — |
-| 27 | DELETE | `/api/production/work-centers/:id` | `production.WorkCenter/delete` | PRODUCTION_PLANNER | — |
-| 28 | GET | `/api/production/mps` | `production.Mps/index` | PRODUCTION_PLANNER | — |
-| 29 | POST | `/api/production/mps` | `production.Mps/create` | PRODUCTION_PLANNER | — |
-| 30 | PUT | `/api/production/mps/:id` | `production.Mps/update` | PRODUCTION_PLANNER | — |
-| 31 | DELETE | `/api/production/mps/:id` | `production.Mps/delete` | PRODUCTION_PLANNER | — |
-| 32 | GET | `/api/production/work-orders` | `production.WorkOrder/index` | PRODUCTION_PLANNER, OPERATOR | — |
-| 33 | GET | `/api/production/work-orders/:id` | `production.WorkOrder/read` | PRODUCTION_PLANNER, OPERATOR | — |
-| 34 | GET | `/api/production/work-orders/:id/history` | `production.WorkOrder/history` | PRODUCTION_PLANNER, OPERATOR | — |
-| 35 | POST | `/api/production/work-orders/explode` | `production.WorkOrder/explode` | PRODUCTION_PLANNER | — |
-| 36 | PUT | `/api/production/work-orders/:id/start` | `production.WorkOrder/start` | OPERATOR, PRODUCTION_PLANNER | — |
-| 37 | PUT | `/api/production/work-orders/:id/complete` | `production.WorkOrder/complete` | OPERATOR, PRODUCTION_PLANNER | — |
-| 38 | PUT | `/api/production/work-orders/:id/repair` | `production.WorkOrder/repair` | SYSTEM_ADMIN | — |
-| 39 | GET | `/api/production/capacity` | `production.Capacity/index` | PRODUCTION_PLANNER | — |
-| 40 | GET | `/api/catalog/products` | `catalog.Product/index` | PRODUCT_SPECIALIST, CONTENT_MODERATOR, PRODUCTION_PLANNER, REVIEWER | — |
-| 41 | POST | `/api/catalog/products` | `catalog.Product/create` | PRODUCT_SPECIALIST | — |
-| 42 | GET | `/api/catalog/products/duplicates` | `catalog.Product/duplicates` | CONTENT_MODERATOR | — |
-| 43 | GET | `/api/catalog/products/:id` | `catalog.Product/read` | PRODUCT_SPECIALIST, CONTENT_MODERATOR, PRODUCTION_PLANNER, REVIEWER | — |
-| 44 | PUT | `/api/catalog/products/:id` | `catalog.Product/update` | PRODUCT_SPECIALIST | — |
-| 45 | POST | `/api/catalog/products/:id/submit` | `catalog.Product/submit` | PRODUCT_SPECIALIST | — |
-| 46 | GET | `/api/moderation/pending` | `moderation.Moderation/pending` | CONTENT_MODERATOR | — |
-| 47 | POST | `/api/moderation/bulk-action` | `moderation.Moderation/bulkAction` | CONTENT_MODERATOR | — |
-| 48 | POST | `/api/moderation/merge-review` | `moderation.Moderation/mergeReview` | CONTENT_MODERATOR | — |
-| 49 | GET | `/api/reviews/reviewers` | `review.Review/listReviewers` | REVIEW_MANAGER, REVIEWER | — |
-| 50 | POST | `/api/reviews/reviewers` | `review.Review/createReviewer` | REVIEW_MANAGER | — |
-| 51 | GET | `/api/reviews/reviewers/:id/conflicts` | `review.Review/conflicts` | REVIEW_MANAGER, REVIEWER | — |
-| 52 | POST | `/api/reviews/assignments/auto` | `review.Review/autoAssign` | REVIEW_MANAGER | — |
-| 53 | GET | `/api/reviews/assignments` | `review.Review/listAssignments` | REVIEWER, REVIEW_MANAGER | — |
-| 54 | POST | `/api/reviews/assignments` | `review.Review/assign` | REVIEW_MANAGER | — |
-| 55 | GET | `/api/reviews/scorecards` | `review.Review/listScorecards` | REVIEW_MANAGER, REVIEWER | — |
-| 56 | POST | `/api/reviews/scorecards` | `review.Review/createScorecard` | REVIEW_MANAGER | — |
-| 57 | POST | `/api/reviews/submissions` | `review.Review/submit` | REVIEWER | — |
-| 58 | POST | `/api/reviews/submissions/:id/publish` | `review.Review/publish` | REVIEW_MANAGER | — |
-| 59 | GET | `/api/finance/payments` | `finance.Payment/index` | FINANCE_CLERK | — |
-| 60 | GET | `/api/finance/payments/:id` | `finance.Payment/read` | FINANCE_CLERK | — |
-| 61 | POST | `/api/finance/payments/import` | `finance.Payment/import` | FINANCE_CLERK | StepUp |
-| 62 | GET | `/api/finance/receipts` | `finance.Receipt/index` | FINANCE_CLERK | — |
-| 63 | GET | `/api/finance/receipts/:id` | `finance.Receipt/read` | FINANCE_CLERK | — |
-| 64 | GET | `/api/finance/receipts/:id/verify` | `finance.Receipt/verify` | FINANCE_CLERK | — |
-| 65 | PUT | `/api/finance/receipts/:id/bind` | `finance.Receipt/bind` | FINANCE_CLERK | — |
-| 66 | POST | `/api/finance/receipts/callback` | `finance.Receipt/callback` | FINANCE_CLERK | — |
-| 67 | POST | `/api/finance/reconciliation/run` | `finance.Reconciliation/run` | FINANCE_CLERK | — |
-| 68 | GET | `/api/finance/reconciliation/anomalies` | `finance.Reconciliation/anomalies` | FINANCE_CLERK | — |
-| 69 | GET | `/api/finance/settlements` | `finance.Settlement/index` | FINANCE_CLERK | — |
-| 70 | POST | `/api/finance/settlements` | `finance.Settlement/create` | FINANCE_CLERK | StepUp |
-| 71 | GET | `/api/finance/settlements/:id/report` | `finance.Settlement/report` | FINANCE_CLERK | — |
-| 72 | GET | `/api/admin/risk/scores` | `admin.Risk/scores` | SYSTEM_ADMIN | — |
-| 73 | GET | `/api/admin/risk/ip-scores` | `admin.Risk/ipScores` | SYSTEM_ADMIN | — |
-| 74 | GET | `/api/admin/risk/flags` | `admin.Risk/flags` | SYSTEM_ADMIN | — |
-| 75 | PUT | `/api/admin/risk/flags/:id/clear` | `admin.Risk/clearFlag` | SYSTEM_ADMIN | — |
-| 76 | GET | `/api/admin/risk/throttles` | `admin.Risk/throttles` | SYSTEM_ADMIN | — |
-| 77 | PUT | `/api/admin/risk/throttles` | `admin.Risk/updateThrottles` | SYSTEM_ADMIN | — |
-| 78 | GET | `/api/admin/audit/logs` | `admin.Audit/logs` | SYSTEM_ADMIN | — |
-| 79 | GET | `/api/dashboard` | `admin.Dashboard/index` | Auth (role-aware) | — |
-| 80 | GET | `/api/admin/dashboard` | `admin.Dashboard/index` | SYSTEM_ADMIN | — |
-| P1 | GET | `/` | `Index/index` | — | frontend |
-| P2 | GET | `/login` | `page.Page/login` | — | frontend |
-| P3 | GET | `/dashboard` | `page.Page/dashboard` | Auth | frontend |
-| P4 | GET | `/appointments` | `page.Page/appointmentsIndex` | SERVICE_COORDINATOR, PROVIDER | frontend |
-| P5 | GET | `/appointments/create` | `page.Page/appointmentsCreate` | SERVICE_COORDINATOR | frontend |
-| P6 | GET | `/provider/queue` | `page.Page/providerQueue` | PROVIDER | frontend |
-| P7 | GET | `/production/mps` | `page.Page/productionMps` | PRODUCTION_PLANNER | frontend |
-| P8 | GET | `/production/work-orders` | `page.Page/productionWorkOrders` | PRODUCTION_PLANNER, OPERATOR | frontend |
-| P9 | GET | `/production/capacity` | `page.Page/productionCapacity` | PRODUCTION_PLANNER | frontend |
-| P10 | GET | `/catalog/products` | `page.Page/catalogProducts` | PRODUCT_SPECIALIST, CONTENT_MODERATOR, PRODUCTION_PLANNER, REVIEWER | frontend |
-| P11 | GET | `/moderation` | `page.Page/moderationIndex` | CONTENT_MODERATOR | frontend |
-| P12 | GET | `/reviews/assignments` | `page.Page/reviewsAssignments` | REVIEWER, REVIEW_MANAGER | frontend |
-| P13 | GET | `/reviews/scorecards` | `page.Page/reviewsScorecards` | REVIEWER, REVIEW_MANAGER | frontend |
-| P14 | GET | `/finance/payments` | `page.Page/financePayments` | FINANCE_CLERK | frontend |
-| P15 | GET | `/finance/receipts` | `page.Page/financeReceipts` | FINANCE_CLERK | frontend |
-| P16 | GET | `/finance/reconciliation` | `page.Page/financeReconciliation` | FINANCE_CLERK | frontend |
-| P17 | GET | `/finance/settlements` | `page.Page/financeSettlements` | FINANCE_CLERK | frontend |
-| P18 | GET | `/admin/users` | `page.Page/adminUsers` | SYSTEM_ADMIN | frontend |
-| P19 | GET | `/admin/risk` | `page.Page/adminRisk` | SYSTEM_ADMIN | frontend |
-| P20 | GET | `/admin/audit` | `page.Page/adminAudit` | SYSTEM_ADMIN | frontend |
-
-**Total:** 80 API endpoints + 20 frontend page routes = 100 routes.
-
-## Per-Endpoint Coverage Mapping
-
-Coverage status legend:
-- `covered` — at least one happy-path + negative assertion in a test file.
-- `basically covered` — happy-path asserted; some negative/boundary cases missing.
-- `insufficient` — contract drift, partial surface only, or placeholder-only.
-- `uncovered` — no test touches this endpoint directly.
-
-| # | Endpoint | Test File(s) | Status | Gap / Minimum Addition |
-|---|---|---|---|---|
-| 1 | GET `/api/health` | `tests/api/AuthApiTest.php` (smoke) | basically covered | Add dedicated health assertion |
-| 2 | POST `/api/auth/login` | `tests/api/AuthApiTest.php:10-88`, `tests/integration/AuthServiceIntegrationTest.php` | covered | — |
-| 3 | POST `/api/auth/logout` | `tests/api/AuthApiTest.php` | covered | — |
-| 4 | POST `/api/auth/change-password` | `tests/api/AuthApiTest.php:89-177` | covered | — |
-| 5 | GET `/api/admin/users` | `tests/api/UserApiTest.php` | covered | — |
-| 6 | POST `/api/admin/users` | `tests/api/UserApiTest.php` | covered | — |
-| 7 | PUT `/api/admin/users/:id` | `tests/api/UserApiTest.php` | covered | — |
-| 8 | PUT `/api/admin/users/:id/lock` | `tests/api/UserApiTest.php:113-119` | basically covered | Add post-lock login-blocked assertion |
-| 9 | PUT `/api/admin/users/:id/unlock` | `tests/api/UserApiTest.php` | basically covered | Add post-unlock login-allowed assertion |
-| 10 | GET `/api/appointments` | `tests/api/AppointmentApiTest.php` | covered | — |
-| 11 | POST `/api/appointments` | `tests/api/AppointmentApiTest.php:28-80`, `tests/api/StepUpHoldApiTest.php` | covered | — |
-| 12 | GET `/api/appointments/:id` | `tests/api/AppointmentApiTest.php` | covered | — |
-| 13 | GET `/api/appointments/:id/history` | `tests/integration/SecurityCoverageTest.php:23-55` | covered | — |
-| 14 | PUT `/api/appointments/:id/confirm` | `tests/api/AppointmentApiTest.php`, `tests/integration/AppointmentServiceIntegrationTest.php:61-97` | covered | — |
-| 15 | PUT `/api/appointments/:id/reschedule` | `tests/api/AppointmentApiTest.php:147-172`, `tests/integration/AppointmentServiceIntegrationTest.php:151-170` | covered | Add boundary test exactly at 2h threshold |
-| 16 | PUT `/api/appointments/:id/cancel` | `tests/api/AppointmentApiTest.php` | covered | — |
-| 17 | PUT `/api/appointments/:id/repair` | `tests/integration/AppointmentServiceIntegrationTest.php` | covered | — |
-| 18 | PUT `/api/appointments/:id/check-in` | `tests/api/AppointmentApiTest.php:28-133` | covered | — |
-| 19 | PUT `/api/appointments/:id/check-out` | `tests/api/AppointmentApiTest.php:28-133` | covered | Add evidence-required negative path |
-| 20 | POST `/api/appointments/:id/attachments` | `tests/api/AppointmentApiTest.php` | basically covered | Add >10MB rejection + non-PDF/image rejection |
-| 21 | GET `/api/appointments/:id/attachments` | `tests/api/AppointmentApiTest.php` | covered | — |
-| 22 | GET `/api/provider/queue` | `tests/api/AppointmentApiTest.php` | basically covered | Add dedicated queue ordering test |
-| 23 | GET `/api/production/work-centers` | `tests/api/ProductionApiTest.php` | covered | — |
-| 24 | GET `/api/production/work-centers/:id` | `tests/api/ProductionApiTest.php` | covered | — |
-| 25 | POST `/api/production/work-centers` | `tests/api/ProductionApiTest.php` | covered | — |
-| 26 | PUT `/api/production/work-centers/:id` | `tests/api/ProductionApiTest.php` | basically covered | Add capacity-change propagation test |
-| 27 | DELETE `/api/production/work-centers/:id` | `tests/api/ProductionApiTest.php` | basically covered | Add in-use-delete rejection test |
-| 28 | GET `/api/production/mps` | `tests/api/ProductionApiTest.php` | covered | — |
-| 29 | POST `/api/production/mps` | `tests/api/ProductionApiTest.php` | covered | — |
-| 30 | PUT `/api/production/mps/:id` | `tests/api/ProductionApiTest.php` | covered | — |
-| 31 | DELETE `/api/production/mps/:id` | `tests/api/ProductionApiTest.php` | basically covered | Add cascade-to-work-orders test |
-| 32 | GET `/api/production/work-orders` | `tests/api/ProductionApiTest.php`, `tests/integration/ProductionServiceIntegrationTest.php` | covered | — |
-| 33 | GET `/api/production/work-orders/:id` | `tests/api/ProductionApiTest.php` | covered | — |
-| 34 | GET `/api/production/work-orders/:id/history` | `tests/integration/SecurityCoverageTest.php` | basically covered | Add trigger parity to appointment_history |
-| 35 | POST `/api/production/work-orders/explode` | `tests/integration/ProductionServiceIntegrationTest.php` | covered | — |
-| 36 | PUT `/api/production/work-orders/:id/start` | `tests/api/ProductionApiTest.php` | covered | — |
-| 37 | PUT `/api/production/work-orders/:id/complete` | `tests/api/ProductionApiTest.php`, `tests/unit/ProductionCapacityTest.php` | covered | — |
-| 38 | PUT `/api/production/work-orders/:id/repair` | `tests/integration/ProductionServiceIntegrationTest.php` | basically covered | Add admin-only 403 assertion |
-| 39 | GET `/api/production/capacity` | `tests/unit/ProductionCapacityTest.php`, `tests/api/ProductionApiTest.php` | covered | — |
-| 40 | GET `/api/catalog/products` | `tests/api/CatalogApiTest.php`, `tests/api/BlindReviewProductReadApiTest.php:16-87` | covered | Add blind masking regression for list pagination |
-| 41 | POST `/api/catalog/products` | `tests/api/CatalogApiTest.php`, `tests/api/CatalogOwnershipApiTest.php:19-55` | covered | — |
-| 42 | GET `/api/catalog/products/duplicates` | `tests/integration/CatalogServiceIntegrationTest.php` | basically covered | Add API-level duplicates assertion |
-| 43 | GET `/api/catalog/products/:id` | `tests/api/BlindReviewProductReadApiTest.php` | covered | — |
-| 44 | PUT `/api/catalog/products/:id` | `tests/api/CatalogApiTest.php` | covered | — |
-| 45 | POST `/api/catalog/products/:id/submit` | `tests/api/CatalogApiTest.php`, `tests/unit/CatalogServiceTest.php` | covered | — |
-| 46 | GET `/api/moderation/pending` | `tests/api/ModerationApiTest.php` | covered | — |
-| 47 | POST `/api/moderation/bulk-action` | `tests/api/ModerationApiTest.php`, `tests/unit/ModerationTest.php` | covered | — |
-| 48 | POST `/api/moderation/merge-review` | `tests/integration/ModerationServiceIntegrationTest.php` | covered | — |
-| 49 | GET `/api/reviews/reviewers` | `tests/api/ReviewApiTest.php` | covered | — |
-| 50 | POST `/api/reviews/reviewers` | `tests/api/ReviewApiTest.php`, `tests/integration/PoolGovernanceTest.php:27-77` | covered | — |
-| 51 | GET `/api/reviews/reviewers/:id/conflicts` | `tests/unit/ReviewConflictTest.php`, `tests/integration/ReviewServiceIntegrationTest.php` | covered | — |
-| 52 | POST `/api/reviews/assignments/auto` | `tests/integration/ReviewServiceIntegrationTest.php:94-106` | covered | — |
-| 53 | GET `/api/reviews/assignments` | `tests/api/ReviewApiTest.php` | covered | — |
-| 54 | POST `/api/reviews/assignments` | `tests/api/ReviewApiTest.php`, `tests/unit/ReviewConflictTest.php` | covered | — |
-| 55 | GET `/api/reviews/scorecards` | `tests/api/ReviewApiTest.php` | covered | — |
-| 56 | POST `/api/reviews/scorecards` | `tests/unit/ScorecardValidationTest.php` | covered | — |
-| 57 | POST `/api/reviews/submissions` | `tests/api/ReviewApiTest.php`, `tests/integration/ReviewServiceIntegrationTest.php` | covered | Add configurable-rating-levels assertion (see audit #2) |
-| 58 | POST `/api/reviews/submissions/:id/publish` | `tests/api/ReviewApiTest.php` | covered | — |
-| 59 | GET `/api/finance/payments` | `tests/api/FinanceApiTest.php` | covered | — |
-| 60 | GET `/api/finance/payments/:id` | `tests/api/FinanceApiTest.php` | covered | — |
-| 61 | POST `/api/finance/payments/import` | `tests/api/FinanceApiTest.php`, `tests/integration/SecurityCoverageTest.php:85-188` | covered | — |
-| 62 | GET `/api/finance/receipts` | `tests/api/FinanceApiTest.php` | covered | — |
-| 63 | GET `/api/finance/receipts/:id` | `tests/api/FinanceApiTest.php` | covered | — |
-| 64 | GET `/api/finance/receipts/:id/verify` | `tests/api/FinanceCallbackApiTest.php` | covered | — |
-| 65 | PUT `/api/finance/receipts/:id/bind` | `tests/api/FinanceApiTest.php` | basically covered | Add negative (non-matching amount) assertion |
-| 66 | POST `/api/finance/receipts/callback` | `tests/api/FinanceCallbackApiTest.php:14-49` | basically covered | Add replay test (same signed callback twice) |
-| 67 | POST `/api/finance/reconciliation/run` | `tests/integration/FinanceServiceIntegrationTest.php:160-193`, `tests/api/FinanceApiTest.php:32-48` | covered | Add variance-boundary tests at exactly $50.00 vs $50.01 |
-| 68 | GET `/api/finance/reconciliation/anomalies` | `tests/api/FinanceApiTest.php` | covered | — |
-| 69 | GET `/api/finance/settlements` | `tests/api/FinanceApiTest.php` | covered | — |
-| 70 | POST `/api/finance/settlements` | `tests/integration/FinanceServiceIntegrationTest.php`, `tests/unit/FinanceReconciliationTest.php` | covered | — |
-| 71 | GET `/api/finance/settlements/:id/report` | `tests/api/FinanceApiTest.php` | basically covered | Add report-content shape assertion |
-| 72 | GET `/api/admin/risk/scores` | `tests/api/RiskApiTest.php:65-71`, `tests/unit/RiskScoringTest.php` | covered | — |
-| 73 | GET `/api/admin/risk/ip-scores` | `tests/api/RiskApiTest.php` | basically covered | Add IP-risk scoring expectation |
-| 74 | GET `/api/admin/risk/flags` | `tests/api/RiskApiTest.php`, `tests/integration/RiskServiceIntegrationTest.php` | covered | — |
-| 75 | PUT `/api/admin/risk/flags/:id/clear` | `tests/api/RiskApiTest.php` | covered | — |
-| 76 | GET `/api/admin/risk/throttles` | `tests/api/RiskApiTest.php` | basically covered | Add throttle-value-visibility assertion |
-| 77 | PUT `/api/admin/risk/throttles` | `tests/api/RiskApiTest.php`, `tests/integration/MiddlewareIntegrationTest.php:31-103` | covered | — |
-| 78 | GET `/api/admin/audit/logs` | `tests/integration/AuditServiceIntegrationTest.php`, `tests/unit/AuditLogTest.php` | covered | — |
-| 79 | GET `/api/dashboard` | `tests/api/DashboardApiTest.php:10-33` | **insufficient** | Contract drift: test expects flat keys; controller returns nested `{ role, stats }`. Align to `data.stats.*` (audit #5). |
-| 80 | GET `/api/admin/dashboard` | `tests/api/DashboardApiTest.php:65-71` | basically covered | Admin-only 403 assertion present |
-| P1–P20 | Frontend page routes | `tests/integration/ControllerIntegrationTest.php`, `tests/integration/MiddlewareIntegrationTest.php` | basically covered | No browser-level E2E; Cypress suite exists but is not run by `run_tests.sh` |
-
-### Security Coverage Audit
-
-- **Authentication:** *sufficiently covered* — `tests/api/AuthApiTest.php`, `tests/integration/AuthServiceIntegrationTest.php`.
-- **Route authorization:** *basically covered* — per-endpoint role checks across every `*ApiTest.php`.
-- **Object-level authorization:** *basically covered* — `tests/api/AppointmentApiTest.php`, `tests/api/CatalogOwnershipApiTest.php`, `tests/api/BlindReviewProductReadApiTest.php`.
-- **Immutable audit history:** *covered* — `tests/integration/SecurityCoverageTest.php:23-55` validates trigger-protected update/delete rejection.
-- **Step-up hold:** *insufficient* — only appointment-create path verified in `tests/api/StepUpHoldApiTest.php`; other sensitive-mutation surfaces unexercised (audit #4).
-- **CSRF:** *uncovered* — no CSRF middleware exists and no CSRF test coverage exists (audit #3).
-- **Tenant / data isolation:** *cannot confirm* — single-tenant architecture; only per-role/object restrictions are tested.
-
-### Final Coverage Judgment
-
-**Partial Pass.** Major happy paths and most failure paths are exercised, but:
-- Dashboard contract drift (Endpoint #79) is a live test-vs-code disagreement.
-- Step-up enforcement is tested on only one endpoint class.
-- CSRF coverage is absent because the control itself is missing.
-- No browser-driven E2E validation of the frontend page routes (P1–P20).
-
-## README Audit
-
-### README audit scope
-The audit below inspects `repo/README.md` against three criteria:
-1. Template conformance (project-supplied template).
-2. Factual accuracy vs. repository contents.
-3. Rule compliance (containerization rule: README must not contain manual dependency-install commands such as `composer install` or `npm install`).
-
-### README findings
-
-| Area | Observation | Status |
-|---|---|---|
-| Project name & description | Project name and one-line description present. | pass |
-| Tech stack section | ThinkPHP / Layui / MySQL / Docker listed. | pass |
-| Project structure tree | ASCII tree with required files (`docker-compose.yml`, `run_tests.sh`, `.env.example`, `README.md`) marked. | pass |
-| Prerequisites | Docker + Docker Compose listed. | pass |
-| Run the application | `docker compose up --build -d` present. | pass |
-| Test instructions | `chmod +x run_tests.sh` + `./run_tests.sh`; exit-code contract stated. | pass |
-| Seeded credentials | Per-role credentials table present. | pass |
-| **Forbidden manual dependency install — `composer install`** | Present at `repo/README.md:71`, `:72`, `:75`. | **fail (Rule 6)** |
-| **Forbidden manual dependency install — `npm install`** | Present at `repo/README.md:136`. | **fail (Rule 6)** |
-| E2E/Cypress optional section | Prior README referenced Cypress with `npm install`, which violates Rule 6. | **fail (Rule 6)** |
-| API spec reference | README should either reference `docs/api-spec.md` as a doc pointer or omit it — current link is valid. | pass |
-
-### README remediation
-- Rewrite `repo/README.md` using the project-supplied template.
-- Remove all `composer install` and `npm install` instructions; move dependency install entirely into the Docker image build (`Dockerfile`, `Dockerfile.test`) so the end-user's path is strictly `docker compose up --build -d` and `./run_tests.sh`.
-- Keep all offline-determinism context inside the Dockerfiles; README should not describe manual lockfile/vendor workflows.
-
-## Test Coverage Score
-**78/100**
+## Test Coverage Score (0-100)
+- **90.89 / 100**
 
 ## Score Rationale
-- Breadth across Unit/Integration/API is strong; 80 API endpoints each have at least one test touching them.
-- Real Dockerized test execution with an 85% line-coverage gate is enforced automatically.
-- Deductions are driven by:
-  - Dashboard API contract drift (1 `insufficient`).
-  - Step-up hold surface covered on only one endpoint.
-  - CSRF control + coverage entirely missing (control-side and test-side gap).
-  - No browser-driven E2E coverage of the 20 frontend page routes.
+- + strong true no-mock HTTP API coverage (74/80).
+- + broad backend unit/integration depth with meaningful assertions.
+- - uncovered API endpoints in production/review/finance/risk/dashboard alias.
+- - **critical** absence of frontend unit tests for a fullstack project.
+- - some API tests rely on optional data presence for deep assertions.
 
 ## Key Gaps
-- `/api/dashboard` test contract drift (expects flat keys; controller returns nested `{ role, stats }`).
-- Step-up hold coverage only on appointment create path.
-- CSRF middleware and associated negative tests entirely absent.
-- Callback replay (idempotency) test missing for `POST /api/finance/receipts/callback`.
-- Reconciliation variance-boundary assertions missing at exactly `$50.00` vs `$50.01`.
-- No browser-driven frontend E2E (Cypress scaffold exists but is not wired into `run_tests.sh`).
+1. No frontend unit tests (critical for fullstack).
+2. 6 uncovered API endpoints (listed in Coverage Summary).
+3. Optional-data branches reduce deterministic assertion depth for some finance read endpoints.
 
-## Notes
-- This review is static inspection only — no test execution was performed during the audit.
-- The previous revision of this file incorrectly described a Flask/HTMX/pytest stack with `fieldservice-tests` and `pytest tests/`. Those claims have been removed; the actual stack is ThinkPHP/Layui/PHPUnit with a `precision-portal-tests` Docker image and a `vendor/bin/phpunit` invocation (see `repo/run_tests.sh:7,13` and `repo/docker/run_tests_entry.sh:78,103`).
+## Confidence & Assumptions
+- Confidence: **high** for endpoint inventory and HTTP mapping (route + test files are explicit).
+- Assumptions:
+  - only `route/app.php` defines API endpoints for this repo.
+  - static inspection cannot validate runtime route registration conditions.
+
+---
+
+# README Audit
+
+## README Location
+- Found at required location: `README.md`.
+
+## Hard Gate Evaluation
+
+### Formatting
+- PASS: Markdown structure is readable and organized (`README.md:1-90`).
+
+### Startup Instructions (fullstack/backend)
+- PASS: includes `docker-compose up` command (`README.md:44` contains `docker-compose up --build -d`).
+
+### Access Method
+- PASS: URL + port clearly documented (`README.md:53-56`).
+
+### Verification Method
+- **FAIL**: no concrete "how to verify working system" flow (no curl/Postman API verification and no explicit UI verification checklist).
+- Evidence: README ends at credentials; no verification section beyond run instructions (`README.md:63-90`).
+
+### Environment Rules (Docker-contained, no runtime installs)
+- PASS: no prohibited `npm install` / `pip install` / `apt-get` / manual DB setup instructions detected.
+- Containerized run path documented (`README.md:39-61`, `run_tests.sh:7-13`).
+
+### Demo Credentials (auth exists)
+- PASS: username + password + role matrix provided and includes all operational roles (`README.md:79-90`).
+
+## Engineering Quality
+- Tech stack clarity: good (`README.md:5-10`).
+- Architecture explanation: moderate (module list is clear, architectural flows are brief).
+- Testing instructions: present but slightly inconsistent wording.
+  - README says all tests (incl E2E) via `run_tests.sh` (`README.md:65`), while package metadata says Cypress is optional (`package.json:5`).
+- Security/roles: good credential and RBAC role coverage (`README.md:77-90`).
+- Workflow guidance: basic run/stop/testing present.
+- Presentation quality: generally good, but lacks explicit verification and explicit project-type label token.
+
+## High Priority Issues
+1. Missing required verification method section (no explicit API/UI validation procedure after startup).
+
+## Medium Priority Issues
+1. Required top-of-README project-type declaration token is missing (`backend|fullstack|web|android|ios|desktop` not explicitly stated as such).
+2. Testing wording inconsistency: README implies all tests via `run_tests.sh` (`README.md:65`), while Cypress is described as optional (`README.md:23`, `package.json:5`).
+
+## Low Priority Issues
+1. No explicit architecture interaction diagram/flow (optional quality improvement, not a hard gate).
+
+## Hard Gate Failures
+1. Verification Method: FAILED.
+
+## README Verdict
+- **FAIL**
+
+## Final Verdicts
+- Test Coverage Audit Verdict: **PARTIAL PASS with CRITICAL GAP** (frontend unit tests missing; 6 API endpoints uncovered).
+- README Audit Verdict: **FAIL** (hard-gate verification method missing).
